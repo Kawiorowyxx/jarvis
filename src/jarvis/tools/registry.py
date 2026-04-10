@@ -20,6 +20,7 @@ from .builtin.refresh_mcp_tools import RefreshMCPToolsTool
 from .builtin.weather import WeatherTool
 from .builtin.stop import StopTool
 from .builtin.tool_search import ToolSearchTool
+from .builtin.undo import UndoTool
 from .types import ToolExecutionResult
 from ..config import Settings
 from .external.mcp_client import MCPClient
@@ -39,6 +40,7 @@ BUILTIN_TOOLS = {
     "getWeather": WeatherTool(),
     "stop": StopTool(),
     "toolSearchTool": ToolSearchTool(),
+    "undo": UndoTool(),
 }
 
 # Global MCP tools cache

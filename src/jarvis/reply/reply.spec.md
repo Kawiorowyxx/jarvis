@@ -4,17 +4,20 @@ This specification documents only the reply flow that begins when a valid user q
 
 ### Architecture Overview
 - Components:
-  - Reply Engine (`src/jarvis/reply/engine.py`): Orchestrates conversation-memory enrichment, tool-use protocol, messages loop, output, and memory update.
+  - Reply Engine (`src/jarvis/reply/engine.py`): Orchestrates request classification, conversation-memory enrichment, approval checking, tool-use protocol, messages loop, task state tracking, output, and memory update.
   - System Prompt (`src/jarvis/system_prompt.py`): Provides a unified `SYSTEM_PROMPT` with adaptive guidance for all topics. Declares the assistant's persona — a British butler named Jarvis with dry wit and light, good-natured sarcasm — with explicit behavioural rules (answer-first/quip-second, at most one quip, skip the quip for serious topics, no butler clichés, sarcasm never aimed at the user). The rules are phrased concretely rather than as tone adjectives so small models can follow them. Persona behaviour is not currently covered by an eval; add one if the tone regresses or the rules evolve.
   - LLM Gateway (`src/jarvis/llm/`): pluggable backend abstraction (`LLMBackend` ABC + `OllamaBackend` impl, factory at `get_llm_backend(settings)`). The reply engine uses the function-style helper `chat_with_messages` (sends the messages array and returns raw JSON) and `extract_text_from_response` (normalises content across providers); both dispatch to the same backend. See `src/jarvis/llm/llm.spec.md`.
   - Conversation Memory (`src/jarvis/memory/conversation.py`): Supplies recent dialogue messages and keyword/time-bounded recall.
   - Enrichment LLM (`src/jarvis/reply/enrichment.py`): Extracts search params (keywords and optional time bounds) from the current query to drive conversation recall.
+  - Task State (`src/jarvis/task_state.py`): Session-scoped tracker for the active task – intent, execution steps, status, and resumption support.
+  - Approval (`src/jarvis/approval.py`): Risk assessment and approval logic; classifies requests as informational/operational and tool invocations as safe/moderate/high risk.
 
 Design principles enforced by the engine:
 - Unified System Prompt: A single prompt with adaptive guidance handles all topics; no per-profile routing.
 - Tool Response Flow: Tools return raw data; formatting/personality is handled by the LLM through the engine's loop. The system prompt explicitly instructs the model to use tool results to fulfill the user's original request, not to describe the structure or format of the tool response.
 - Language-Agnostic Design: Prompts and ASR guidance avoid language-specific phrasing.
 - Data Privacy: Inputs are redacted and logging is concise and purposeful via `debug_log`.
+- Autonomy with Safety: The engine acts automatically on clear instructions, asks clarification only when genuinely ambiguous, and requires explicit approval for destructive or high-impact operations.
 
 ### Entry and Inputs
 - Entry point: the reply engine receives a user query from the ingestion layer.
@@ -27,6 +30,10 @@ Design principles enforced by the engine:
 ### Steps and Branches (Agentic Messages Loop)
 1. Redact
    - Redact input to remove sensitive data.
+
+1a. Classify & Begin Task
+   - Classify the request as `informational` or `operational` using `classify_request()` from `src/jarvis/approval.py`.
+   - Call `begin_task(intent)` from `src/jarvis/task_state.py` to initialise session-scoped state tracking.
 
 2. Recent Dialogue Context
    - Include short-term dialogue memory (last 5 minutes) as prior messages.
@@ -145,17 +152,32 @@ Design principles enforced by the engine:
    - Tool results: native path appends `{role: "tool", tool_call_id: "<id>", content: "<text>"}` messages; text-based fallback appends `{role: "user", content: "[Tool result: name]\n<text>"}` messages
    - No system message injection: The engine does NOT add system messages during the loop as this breaks native tool calling; instead, guidance is provided via tool error responses when needed
 
+   **Approval Gate (Decision Policy):**
+   - Before each tool execution, `requires_approval(tool_name, tool_args)` is called.
+   - HIGH-risk operations (e.g., `localFiles` with `operation=delete`, `deleteMeal`) require explicit user confirmation.
+   - When approval is required, the engine returns an approval prompt to the user and halts execution; the user must re-issue the command with confirmation.
+   - SAFE and MODERATE operations proceed automatically without interruption.
+   - Risk levels per tool are defined in `src/jarvis/approval.py`.
+
+   **Task Step Tracking:**
+   - Each tool execution is recorded as a `TaskStep` on the active `TaskState`.
+   - Steps track: description, tool name, status (PENDING→RUNNING→SUCCEEDED/FAILED), result summary, and timing.
+   - The `TaskState` transitions: IDLE → PLANNING → EXECUTING → AWAITING_APPROVAL | DONE | FAILED.
+
 8. Output and Memory Update
    - Remove any tool protocol markers (e.g., lines beginning with a reserved prefix) from the final response.
    - Print reply with a concise header; optionally include debug labeling.
    - If speech synthesis is enabled, pass the reply through the TTS preprocessor (link-to-description rewriting and markdown stripping — see `src/jarvis/output/tts.py::_preprocess_for_speech`) before speaking. Markdown stripping is required because small models often emit `**bold**`, bullets, and headings despite `VOICE_STYLE` guidance, and Piper-style TTS engines read the syntax characters literally ("asterisk asterisk ..."). The stripper handles bold/italic/strikethrough, inline and fenced code, HTML tags, blockquotes, ATX and setext headings, and bullet/numbered lists. Numbered-list markers are removed only when the line is part of a real list (≥2 adjacent numbered lines with numbers ≤ 99), so prose like "2024. The year..." is preserved. The `VOICE_STYLE` prompt also explicitly forbids markdown — belt-and-suspenders.
    - After speech finishes, trigger the follow-up listening window if configured.
+   - Mark the active `TaskState` as DONE (or FAILED on error).
    - Add the interaction (sanitized user/assistant texts) to short-term dialogue memory; ignore failures.
 
 ### Reply-only Branch Checklist
 - Redaction/DB
   - VSS enabled vs disabled
   - Embedding success vs failure (ignored)
+- Classification
+  - Informational vs operational request
 - System Prompt
   - Unified prompt loaded
 - Conversation Memory
@@ -168,6 +190,9 @@ Design principles enforced by the engine:
   - Plan JSON parsed vs invalid
   - Steps include FINAL_RESPONSE / ANALYZE / tool / unknown
   - Completed without final → partial fallback
+- Approval
+  - Safe/moderate tool proceeds automatically
+  - High-risk tool triggers approval prompt and halts execution
 - Retry
   - Plain chat retry produces text vs empty
 - Output
