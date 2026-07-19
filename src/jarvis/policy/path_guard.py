@@ -48,6 +48,20 @@ _DEFAULT_BLOCKED = [
     "/sbin",
     "/sys",
     "/usr",
+    # Credential and secret stores inside the user's home directory. The
+    # default "home_only" mode would otherwise expose these to any
+    # LLM-driven (or prompt-injected) read, since localFiles reads are
+    # classified SAFE. Data privacy comes first: these are denied by
+    # default and require an explicit workspace configuration to access.
+    "~/.ssh",
+    "~/.aws",
+    "~/.gnupg",
+    "~/.kube",
+    "~/.docker",
+    "~/.netrc",
+    "~/.npmrc",
+    "~/.pypirc",
+    "~/.git-credentials",
 ]
 
 
@@ -93,7 +107,9 @@ def resolve_and_validate_path(
     effective_blocked: List[Path] = []
     for br in (blocked_roots or _DEFAULT_BLOCKED):
         try:
-            effective_blocked.append(Path(os.path.expandvars(br)).resolve())
+            effective_blocked.append(
+                Path(os.path.expanduser(os.path.expandvars(br))).resolve()
+            )
         except (OSError, ValueError):
             effective_blocked.append(Path(br))
 
@@ -207,9 +223,33 @@ def _is_subpath(candidate: Path, parent: Path) -> bool:
     Return True when *candidate* equals *parent* or is located beneath it.
 
     Works correctly after both paths have been resolved (no symlinks).
+    Comparison is case-normalised (``os.path.normcase``) so that on
+    case-insensitive filesystems (macOS, Windows) a differently-cased
+    request (e.g. ``~/.SSH/id_rsa``) cannot evade a blocked or read-only
+    root. On case-sensitive filesystems normcase is a no-op.
     """
     try:
-        candidate.relative_to(parent)
-        return True
-    except ValueError:
+        cand = os.path.normcase(str(candidate))
+        par = os.path.normcase(str(parent))
+        if cand == par or cand.startswith(par.rstrip(os.sep) + os.sep):
+            return True
+    except (TypeError, ValueError):
         return False
+    # String comparison missed. On case-insensitive filesystems (macOS,
+    # Windows) a differently-cased path still names the same file, and
+    # POSIX normcase does not fold case, so fall back to filesystem
+    # identity: walk the candidate's ancestry comparing device+inode with
+    # the parent. Non-existent components are skipped (a path that does
+    # not exist cannot alias an existing root).
+    try:
+        parent_stat = os.stat(parent)
+    except OSError:
+        return False
+    for ancestor in (candidate, *candidate.parents):
+        try:
+            a_stat = os.stat(ancestor)
+        except OSError:
+            continue
+        if os.path.samestat(a_stat, parent_stat):
+            return True
+    return False

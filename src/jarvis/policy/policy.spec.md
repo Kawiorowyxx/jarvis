@@ -64,6 +64,16 @@ Validates file-system paths against operator-defined root lists:
 - `read_only_roots` — write/delete denied; read/list permitted
 
 All paths are resolved to absolute canonical form before comparison.
+Containment checks are case-insensitive-safe: string comparison is
+case-normalised, with a device+inode fallback so that on case-insensitive
+filesystems (macOS, Windows) a differently-cased path cannot evade a
+blocked or read-only root.
+
+When `blocked_roots` is not configured, the defaults cover OS system
+directories **and credential stores inside the home directory** (`~/.ssh`,
+`~/.aws`, `~/.gnupg`, `~/.kube`, `~/.docker`, `~/.netrc`, `~/.npmrc`,
+`~/.pypirc`, `~/.git-credentials`) — the default `home_only` mode would
+otherwise expose these to any LLM-driven read. Data privacy comes first.
 Configuration values are cached at `PathGuard.__init__()` time.
 
 ## Configuration Fields Used

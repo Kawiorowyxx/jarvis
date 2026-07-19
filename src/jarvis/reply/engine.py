@@ -1777,23 +1777,38 @@ def run_reply_engine(db: "Database", cfg, tts: Optional[Any],
     # Spoken post-notes accumulated during this turn (appended to final reply)
     _post_notes: list = []
 
+    # Snapshots larger than this are skipped: an undo entry restoring a
+    # partial snapshot would silently corrupt the file, which is worse than
+    # honestly offering no undo. The direct read below (rather than the
+    # localFiles read operation) avoids that tool's display truncation for
+    # the same reason.
+    _SNAPSHOT_MAX_BYTES = 1_000_000
+
     def _capture_snapshot(t_name: str, t_args: dict):
-        """Read current state of a resource before a destructive tool runs."""
+        """Read the full current state of a resource before a destructive tool runs.
+
+        Returns the exact file contents (or None). Never returns partial
+        content: undo must restore the file byte-for-byte or not exist at all.
+        """
         if t_name == "localFiles":
             op = str(t_args.get("operation", "")).lower()
             if op in ("write", "append", "delete"):
                 path = t_args.get("path")
                 if path:
                     try:
-                        snap = run_tool_with_retries(
-                            db=db, cfg=cfg,
-                            tool_name="localFiles",
-                            tool_args={"operation": "read", "path": path},
-                            system_prompt="", original_prompt="",
-                            redacted_text="", max_retries=0,
-                        )
-                        if snap.reply_text and not snap.error_message:
-                            return snap.reply_text
+                        import os as _os
+                        expanded = _os.path.expanduser(str(path))
+                        if not _os.path.isfile(expanded):
+                            return None  # nothing to snapshot (new file)
+                        if _os.path.getsize(expanded) > _SNAPSHOT_MAX_BYTES:
+                            debug_log(
+                                f"snapshot skipped for {t_name}: file exceeds "
+                                f"{_SNAPSHOT_MAX_BYTES} bytes, undo unavailable",
+                                "undo",
+                            )
+                            return None
+                        with open(expanded, "r", encoding="utf-8", errors="strict") as _fh:
+                            return _fh.read()
                     except Exception as _se:
                         debug_log(f"snapshot capture failed: {_se}", "undo")
         return None
@@ -1867,6 +1882,44 @@ def run_reply_engine(db: "Database", cfg, tts: Optional[Any],
                             and _name != "toolSearchTool"
                             and _cand_sig not in recent_tool_signatures
                         )
+                        # Governance gate: the direct-exec fast path is for
+                        # SAFE informational steps only. Anything that can
+                        # mutate state must run through the model-emitted
+                        # path below, which carries the full policy →
+                        # snapshot → undo → audit sequence. Policy DENY
+                        # (kill-switch) also blocks the fast path. Fail
+                        # closed: on any error the step simply falls back
+                        # to the governed loop.
+                        if _plan_exec_ok:
+                            try:
+                                if assess_risk(_name, _args or {}) != RiskLevel.SAFE:
+                                    debug_log(
+                                        f"planner: direct-exec declined for "
+                                        f"{_name} (non-SAFE risk) — deferring "
+                                        f"to governed tool loop",
+                                        "planning",
+                                    )
+                                    _plan_exec_ok = False
+                                else:
+                                    _gov_decision = _policy_engine_module.evaluate(
+                                        _name, _args or {}
+                                    )
+                                    if not _gov_decision.allowed:
+                                        debug_log(
+                                            f"planner: direct-exec denied by "
+                                            f"policy for {_name}: "
+                                            f"{_gov_decision.denied_reason}",
+                                            "planning",
+                                        )
+                                        _plan_exec_ok = False
+                            except Exception as _gov_exc:
+                                debug_log(
+                                    f"planner: direct-exec governance check "
+                                    f"failed ({_gov_exc}) — deferring to "
+                                    f"governed tool loop",
+                                    "planning",
+                                )
+                                _plan_exec_ok = False
                         if _plan_exec_ok:
                             debug_log(
                                 f"planner: direct-executing plan step "
@@ -2285,6 +2338,13 @@ def run_reply_engine(db: "Database", cfg, tts: Optional[Any],
                 debug_log("stop signal received - ending conversation without reply", "planning")
                 step.complete("stop signal")
                 task.complete()
+                # Finalise the audit record — every terminal path must close
+                # its TaskRecord or it stays "executing" in the audit DB forever.
+                if _audit:
+                    try:
+                        _audit.finish_task(_audit_task_id, final_status="done", started_at=task.started_at)
+                    except Exception as _exc:
+                        debug_log(f"audit: failed to finish task record on stop: {_exc}", "audit")
                 try:
                     print("💤 Returning to wake word mode\n", flush=True)
                 except Exception:
@@ -2320,29 +2380,38 @@ def run_reply_engine(db: "Database", cfg, tts: Optional[Any],
 
             # Append tool result
             if result.reply_text:
-                step.complete(result.reply_text[:120])
+                # Step state and undo registration are gated on result.success,
+                # not on the presence of reply_text: tools legitimately return
+                # success=False with a human-readable message in reply_text
+                # (e.g. "Access denied by policy", "Write failed"). Marking
+                # those complete and registering an undo entry would tell the
+                # user they can reverse an action that never happened.
+                if result.success:
+                    step.complete(result.reply_text[:120])
 
-                # Register undo entry if this was a reversible operation
-                _undo_built = build_undo_args(tool_name, tool_args or {}, _snapshot)
-                if _undo_built:
-                    _u_tool, _u_args, _u_desc = _undo_built
-                    _undo_entry = UndoEntry(
-                        step_id=step.step_id,
-                        description=_u_desc,
-                        tool_name=tool_name,
-                        tool_args=tool_args or {},
-                        undo_tool=_u_tool,
-                        undo_args=_u_args,
-                        snapshot=_snapshot,
-                    )
-                    push_undo(_undo_entry)
-                    step.mark_reversible(_undo_entry.step_id)
-                    _note = post_execution_note(tool_name, tool_args)
-                    if _note:
-                        _post_notes.append(_note)
-                        debug_log(
-                            f"undo registered for {tool_name}: {_u_desc}", "undo"
+                    # Register undo entry if this was a reversible operation
+                    _undo_built = build_undo_args(tool_name, tool_args or {}, _snapshot)
+                    if _undo_built:
+                        _u_tool, _u_args, _u_desc = _undo_built
+                        _undo_entry = UndoEntry(
+                            step_id=step.step_id,
+                            description=_u_desc,
+                            tool_name=tool_name,
+                            tool_args=tool_args or {},
+                            undo_tool=_u_tool,
+                            undo_args=_u_args,
+                            snapshot=_snapshot,
                         )
+                        push_undo(_undo_entry)
+                        step.mark_reversible(_undo_entry.step_id)
+                        _note = post_execution_note(tool_name, tool_args)
+                        if _note:
+                            _post_notes.append(_note)
+                            debug_log(
+                                f"undo registered for {tool_name}: {_u_desc}", "undo"
+                            )
+                else:
+                    step.fail((result.error_message or result.reply_text or "")[:120])
 
                 # toolSearchTool is an escape hatch: merge the surfaced tool
                 # names into the per-turn allow-list so the chat model can
@@ -2464,18 +2533,32 @@ def run_reply_engine(db: "Database", cfg, tts: Optional[Any],
                             f"\n\n[If the original query has sub-questions not yet answered "
                             "by this result, call another tool now. Otherwise reply.]"
                         )
+                    # Governance hints (irreversibility warning / undo note)
+                    # ride on the tool-result message so the reply LLM weaves
+                    # them into its answer in the user's language, rather than
+                    # having English spliced into the final reply.
+                    _gov_suffix = ""
+                    if _pre_warnings or _post_notes:
+                        _gov_suffix = "\n\n" + "\n".join(_pre_warnings + _post_notes)
+                        _pre_warnings.clear()
+                        _post_notes.clear()
                     messages.append({
                         "role": "user",
-                        "content": f"[Tool result: {tool_name}]\n{effective_result}{remainder_hint}",
+                        "content": f"[Tool result: {tool_name}]\n{effective_result}{remainder_hint}{_gov_suffix}",
                         "tool_name": tool_name,  # kept for duplicate detection
                         "tool_failed": not result.success,
                     })
                 else:
+                    _gov_suffix = ""
+                    if _pre_warnings or _post_notes:
+                        _gov_suffix = "\n\n" + "\n".join(_pre_warnings + _post_notes)
+                        _pre_warnings.clear()
+                        _post_notes.clear()
                     messages.append({
                         "role": "tool",
                         "tool_call_id": tool_call_id,
                         "tool_name": tool_name,  # Include tool_name for duplicate detection
-                        "content": effective_result,
+                        "content": effective_result + _gov_suffix,
                         "tool_failed": not result.success,
                     })
                 debug_log(f"    ✅ tool result appended ({len(effective_result)} chars)", "planning")
@@ -2534,7 +2617,8 @@ def run_reply_engine(db: "Database", cfg, tts: Optional[Any],
                     _policy_audit_id = (
                         _policy_decision.audit_id if _policy_decision else ""
                     )
-                    _step_success = bool(result.reply_text and not result.error_message)
+                    # Single success predicate shared with step state above.
+                    _step_success = bool(result.success)
                     _step_summary = (
                         result.reply_text[:200] if _step_success else (result.error_message or "")[:200]
                     )
@@ -2649,11 +2733,9 @@ def run_reply_engine(db: "Database", cfg, tts: Optional[Any],
         except Exception:
             pass
     debug_log(task.summary(), "task")
-    # Weave pre-warnings and post-notes into the spoken reply
-    if _pre_warnings:
-        reply = "  ".join(_pre_warnings) + "  " + (reply or "")
-    if _post_notes:
-        reply = (reply or "") + "  " + "  ".join(_post_notes)
+    # Governance hints (irreversibility warnings / undo notes) are delivered
+    # via the tool-result messages above so the LLM phrases them in the
+    # user's language — nothing is spliced into the reply here.
     safe_reply = reply.strip()
     if not safe_reply:
         safe_reply = "Sorry, I had trouble processing that. Could you try again?"

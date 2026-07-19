@@ -21,8 +21,17 @@ ToolRunner (runner.py)
 
 ### `runner.py` — `ToolRunner`
 
-Central execution funnel. Every tool call from the reply engine passes through
-`ToolRunner.run()` after policy evaluation.
+Intended central execution funnel: every tool call from the reply engine
+passes through `ToolRunner.run()` after policy evaluation.
+
+> **⚠️ NOT YET INTEGRATED.** The reply engine currently executes tools via
+> `run_tool_with_retries` directly; nothing instantiates `ToolRunner` in
+> production, and `use_subprocess_for_writes` is inert. Before wiring it in,
+> the runner must (a) actually invoke its `policy_decision_fn` when no
+> decision is supplied instead of defaulting to unmediated in-process
+> execution, (b) pass a scrubbed `env=` to the worker subprocess, and
+> (c) frame the worker response (last-line sentinel or length prefix)
+> rather than parsing the whole stdout as JSON.
 
 **Mode selection:**
 | Tool class             | `use_subprocess_for_writes` | Mode         |

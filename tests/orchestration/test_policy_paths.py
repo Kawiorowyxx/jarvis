@@ -199,3 +199,59 @@ def test_path_guard_validate_raises_for_blocked(tmp_path):
     guard = PathGuard(_FakeCfg())
     with pytest.raises(PolicyDeniedError):
         guard.validate(str(target), AccessMode.READ)
+
+
+@pytest.mark.unit
+def test_default_blocked_covers_home_secret_stores():
+    """Credential stores inside the home directory are denied by default.
+
+    home_only mode permits everything under home, so without these
+    defaults a prompt-injected read of ~/.ssh/id_rsa would be classified
+    SAFE and pass the guard.
+    """
+    from pathlib import Path
+    from jarvis.policy.path_guard import resolve_and_validate_path, AccessMode
+    from jarvis.policy.models import PolicyDeniedError
+    for secret in (".ssh/id_rsa", ".aws/credentials", ".gnupg/private-keys-v1.d/key", ".netrc"):
+        with pytest.raises(PolicyDeniedError):
+            resolve_and_validate_path(
+                str(Path.home() / secret),
+                AccessMode.READ,
+                workspace_roots=[],
+                blocked_roots=None,  # use defaults
+                read_only_roots=[],
+                local_files_mode="home_only",
+            )
+
+
+@pytest.mark.unit
+def test_blocked_root_not_evadable_by_case(tmp_path):
+    """A differently-cased path must not evade a blocked root.
+
+    On case-insensitive filesystems (macOS, Windows) the path refers to
+    the same file; comparison is case-normalised so the guard fails
+    closed either way.
+    """
+    import os
+    from jarvis.policy.path_guard import resolve_and_validate_path, AccessMode
+    from jarvis.policy.models import PolicyDeniedError
+    blocked = tmp_path / "private"
+    blocked.mkdir()
+    target = blocked / "secret.txt"
+    target.write_text("classified")
+    # Re-case only the final directory segment so the workspace prefix
+    # stays intact and the test isolates the blocked-root comparison.
+    cased = str(blocked / "secret.txt").replace(str(blocked), str(tmp_path / "PRIVATE"))
+    # Only meaningful where the filesystem is case-insensitive (macOS,
+    # Windows default): on a case-sensitive FS the cased path simply does
+    # not exist and resolution never grants access.
+    if os.path.exists(cased):
+        with pytest.raises(PolicyDeniedError):
+            resolve_and_validate_path(
+                cased,
+                AccessMode.WRITE,
+                workspace_roots=[str(tmp_path)],
+                blocked_roots=[str(blocked)],
+                read_only_roots=[],
+                local_files_mode="workspace_only",
+            )

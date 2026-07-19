@@ -271,7 +271,10 @@ class Settings:
 
     # ── Policy & Workspace Confinement ─────────────────────────────────────────
     policy_mode: str
-    """One of: always_allow | ask_destructive | ask_every_time | deny_all."""
+    """One of: active | deny. "active" is the normal act-then-undo mode;
+    "deny" is a kill-switch that blocks every tool call. Legacy values
+    (always_allow, ask_destructive, ask_every_time) map to "active";
+    deny_all maps to "deny"."""
 
     workspace_roots: list[str]
     """Directories the agent is permitted to read/write (workspace_only mode)."""
@@ -291,11 +294,15 @@ class Settings:
 
     # ── Shutdown ───────────────────────────────────────────────────────────────────
     shutdown_diary_timeout_sec: float
-    """Maximum seconds to wait for diary LLM update during shutdown."""
+    """Maximum seconds to wait for diary LLM update during shutdown.
+    NOT YET WIRED: the daemon currently uses its own fixed timeout; this
+    key takes effect once ShutdownManager is integrated."""
 
     # ── Process Isolation ─────────────────────────────────────────────────────────────
     use_subprocess_for_writes: bool
-    """Run WRITE_OPERATIONAL tools in an isolated subprocess."""
+    """Run WRITE_OPERATIONAL tools in an isolated subprocess.
+    NOT YET WIRED: the reply engine does not route through ToolRunner yet;
+    this key is inert until the execution package is integrated."""
 
 
 def default_config_path() -> Path:

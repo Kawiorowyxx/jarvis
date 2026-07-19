@@ -152,17 +152,19 @@ Design principles enforced by the engine:
    - Tool results: native path appends `{role: "tool", tool_call_id: "<id>", content: "<text>"}` messages; text-based fallback appends `{role: "user", content: "[Tool result: name]\n<text>"}` messages
    - No system message injection: The engine does NOT add system messages during the loop as this breaks native tool calling; instead, guidance is provided via tool error responses when needed
 
-   **Approval Gate (Decision Policy):**
-   - Before each tool execution, `requires_approval(tool_name, tool_args)` is called.
-   - HIGH-risk operations (e.g., `localFiles` with `operation=delete`, `deleteMeal`) require explicit user confirmation.
-   - When approval is required, the engine returns an approval prompt to the user and halts execution; the user must re-issue the command with confirmation.
-   - SAFE and MODERATE operations proceed automatically without interruption.
-   - Risk levels per tool are defined in `src/jarvis/approval.py`.
+   **Governance (Voice-First Act-Then-Undo — no approval gates):**
+   - Before each model-emitted tool execution, the policy engine (`src/jarvis/policy/engine.py`) evaluates the call. A denial (e.g. `policy_mode=deny` kill-switch, or a path outside the allowed roots) skips execution, marks the step failed, and feeds a tool-error message back to the model — the loop continues, no hard stop.
+   - HIGH-risk **undoable** operations (e.g. `localFiles` write/append/delete): a full pre-execution snapshot is captured (skipped for files over the snapshot size cap — undo must be byte-exact or not offered at all), the action runs, and an `UndoEntry` is pushed to the undo registry. An instruction rides on the tool-result message telling the reply LLM to mention, in the user's language, that the action can be undone. There are no hardcoded user-facing strings.
+   - HIGH-risk **irreversible** operations (e.g. `deleteMeal`): the action runs, and an instruction on the tool-result message tells the reply LLM to warn the user, in their language, that it cannot be undone.
+   - SAFE and MODERATE operations proceed without commentary.
+   - Step completion and undo registration are gated on `result.success` — a tool that fails (even with a human-readable message in `reply_text`) marks its step FAILED and never registers an undo entry.
+   - The planner's direct-exec fast path only runs SAFE-risk, policy-allowed steps; any write/destructive plan step falls through to this governed loop.
+   - Risk levels are declared per tool (`Tool.assess_risk`); the undo strategy table lives in `src/jarvis/approval.py`.
 
    **Task Step Tracking:**
    - Each tool execution is recorded as a `TaskStep` on the active `TaskState`.
    - Steps track: description, tool name, status (PENDING→RUNNING→SUCCEEDED/FAILED), result summary, and timing.
-   - The `TaskState` transitions: IDLE → PLANNING → EXECUTING → AWAITING_APPROVAL | DONE | FAILED.
+   - The `TaskState` transitions: IDLE → PLANNING → EXECUTING → DONE | FAILED. Every terminal path (success, stop, no-reply backstop) also finalises the audit `TaskRecord`.
 
 8. Output and Memory Update
    - Remove any tool protocol markers (e.g., lines beginning with a reserved prefix) from the final response.
@@ -190,9 +192,10 @@ Design principles enforced by the engine:
   - Plan JSON parsed vs invalid
   - Steps include FINAL_RESPONSE / ANALYZE / tool / unknown
   - Completed without final → partial fallback
-- Approval
+- Governance
   - Safe/moderate tool proceeds automatically
-  - High-risk tool triggers approval prompt and halts execution
+  - Policy denial skips the step and feeds a tool-error back to the model
+  - High-risk undoable tool registers an undo entry; irreversible tool triggers a spoken warning via the reply LLM
 - Retry
   - Plain chat retry produces text vs empty
 - Output

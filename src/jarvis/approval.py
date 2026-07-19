@@ -180,7 +180,14 @@ def pre_execution_warning(
     action = f"{tool_name}"
     if args_summary:
         action += f" ({args_summary})"
-    return f"Heads up — {action} cannot be undone."
+    # A model-directed instruction, not user-facing text: the reply LLM weaves
+    # the warning into its answer in the user's language. Never splice literal
+    # English into the spoken reply (language-agnostic rule).
+    return (
+        f"[Safety note: the {action} action that just ran is irreversible — "
+        f"it cannot be undone. Briefly mention this to the user, in the "
+        f"user's language.]"
+    )
 
 
 def post_execution_note(
@@ -201,7 +208,12 @@ def post_execution_note(
         return None
     if not is_undoable(tool_name, tool_args):
         return None
-    return "Say undo if you'd like to reverse that."
+    # Model-directed instruction (see pre_execution_warning): the reply LLM
+    # tells the user, in their language, that the action can be undone.
+    return (
+        "[Note: this action was registered as undoable. Briefly tell the "
+        "user they can ask you to undo it, in the user's language.]"
+    )
 
 
 def build_undo_args(

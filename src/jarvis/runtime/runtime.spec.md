@@ -29,6 +29,13 @@ suitable for log output.
 
 ### `shutdown_manager.py` — `ShutdownManager`
 
+> **⚠️ NOT YET INTEGRATED.** The daemon's shutdown path does not call
+> `ShutdownManager.shutdown()` yet; it retains its own inline shutdown
+> sequence with a fixed diary timeout, so `shutdown_diary_timeout_sec`
+> currently has no effect. The health registry, by contrast, IS wired:
+> the daemon `configure()`s it at startup, though only the `policy` and
+> `audit` services currently record readiness.
+
 Coordinates orderly shutdown:
 1. Flushes the diary (with a configurable `shutdown_diary_timeout_sec`).
 2. Stops TTS.
