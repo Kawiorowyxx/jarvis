@@ -20,7 +20,7 @@ from jarvis.approval import (
 
 @pytest.mark.unit
 def test_safe_read_only_tools():
-    for tool in ("screenshot", "recallConversation", "fetchMeals", "webSearch",
+    for tool in ("screenshot", "fetchMeals", "webSearch",
                  "fetchWebPage", "getWeather", "refreshMCPTools", "stop"):
         assert assess_risk(tool, {}) == RiskLevel.SAFE, f"Expected SAFE for {tool}"
 

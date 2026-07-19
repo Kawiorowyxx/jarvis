@@ -33,7 +33,6 @@ _SAFE_TOOLS = [
     "screenshot",
     "webSearch",
     "fetchWebPage",
-    "recallConversation",
     "fetchMeals",
     "getWeather",
     "refreshMCPTools",

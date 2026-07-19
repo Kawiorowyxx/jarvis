@@ -8,7 +8,12 @@ for reversible actions and spoken warnings for irreversible ones.
 from __future__ import annotations
 
 import pytest
+from pathlib import Path
 from unittest.mock import MagicMock, patch
+
+# A path inside the user's home so the "home_only" path guard permits it on
+# every platform (/tmp is outside home and correctly denied).
+_HOME_FILE = str(Path.home() / "jarvis_policy_test.txt")
 
 
 # ---------------------------------------------------------------------------
@@ -42,7 +47,7 @@ def _make_engine(mode: str = "active"):
 def test_active_permits_destructive():
     """ACTIVE mode permits destructive tools (undo model handles risk)."""
     engine = _make_engine("active")
-    decision = engine.evaluate("localFiles", {"operation": "delete", "path": "/tmp/x.txt"})
+    decision = engine.evaluate("localFiles", {"operation": "delete", "path": _HOME_FILE})
     assert decision.allowed is True
     assert decision.approval_required is False
 
@@ -59,7 +64,7 @@ def test_active_permits_informational():
 def test_active_permits_write():
     """ACTIVE mode permits write operations (undo model handles risk)."""
     engine = _make_engine("active")
-    decision = engine.evaluate("localFiles", {"operation": "write", "path": "/tmp/x.txt"})
+    decision = engine.evaluate("localFiles", {"operation": "write", "path": _HOME_FILE})
     assert decision.allowed is True
 
 
@@ -71,7 +76,7 @@ def test_active_permits_write():
 def test_legacy_always_allow_maps_to_active():
     """Legacy 'always_allow' config value maps to ACTIVE mode."""
     engine = _make_engine("always_allow")
-    decision = engine.evaluate("localFiles", {"operation": "delete", "path": "/tmp/x.txt"})
+    decision = engine.evaluate("localFiles", {"operation": "delete", "path": _HOME_FILE})
     assert decision.allowed is True
 
 
@@ -101,7 +106,7 @@ def test_deny_blocks_any_tool():
 def test_deny_blocks_write_tool():
     """DENY mode blocks write operations."""
     engine = _make_engine("deny")
-    decision = engine.evaluate("localFiles", {"operation": "write", "path": "/tmp/x.txt"})
+    decision = engine.evaluate("localFiles", {"operation": "write", "path": _HOME_FILE})
     assert decision.allowed is False
 
 

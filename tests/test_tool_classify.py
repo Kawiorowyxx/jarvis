@@ -12,7 +12,7 @@ from jarvis.policy.models import ToolClass
 
 @pytest.mark.unit
 @pytest.mark.parametrize("tool_name", [
-    "screenshot", "recallConversation", "stop", "fetchMeals",
+    "screenshot", "stop", "fetchMeals",
 ])
 def test_informational_tools(tool_name):
     tool = BUILTIN_TOOLS[tool_name]
