@@ -398,7 +398,7 @@ Before initialising ``WhisperModel``, a subprocess-isolated pre-download step
 calls ``faster_whisper.utils.download_model`` in a child process. If a SIGABRT
 occurs, only the child is killed — the main Jarvis process continues, prints
 a diagnostic message, and the existing corrupted-cache handler cleans up on
-restart. Once the model is successfully cached, ``WhisperModel`` is called with
+the next ``WhisperModel`` init attempt (same session or on restart). Once the model is successfully cached, ``WhisperModel`` is called with
 ``local_files_only=True`` so it never enters the download path internally.
 
 ### Corrupted Cache Recovery

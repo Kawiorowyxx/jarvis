@@ -365,10 +365,17 @@ def _pre_download_whisper_model_safely(model_name: str) -> bool:
         return False
 
     # Build a self-contained script that downloads the model.
+    # {model_name!r} uses repr() which correctly escapes quotes, backslashes,
+    # and newlines — safe against injection since the script runs as
+    # [sys.executable, "-c", script] (no shell).
     script = textwrap.dedent(f"""\
         import sys
         sys.argv[0] = "jarvis-whisper-download"
-        from faster_whisper.utils import download_model
+        try:
+            from faster_whisper.utils import download_model
+        except ImportError:
+            print("DOWNLOAD_ERROR:faster-whisper not available in subprocess", file=sys.stderr)
+            sys.exit(1)
         try:
             download_model({model_name!r})
         except Exception as exc:
@@ -382,20 +389,20 @@ def _pre_download_whisper_model_safely(model_name: str) -> bool:
             capture_output=True, text=True,
             timeout=300,
         )
-    except subprocess.TimeoutExpired:
-        debug_log(f"Whisper model download timed out after 300s", "voice")
+    except (subprocess.TimeoutExpired, OSError) as exc:
+        debug_log(f"Whisper model download subprocess failed: {exc}", "voice")
         return False
 
     if result.returncode == 0:
         debug_log(f"Whisper model '{model_name}' pre-downloaded successfully", "voice")
         return True
 
-    # Check for non-zero exit (including SIGABRT which produces -6 on Unix).
+    # Check for non-zero exit.
     error = result.stderr.strip() or f"exit code {result.returncode}"
     debug_log(f"Whisper model pre-download failed: {error}", "voice")
 
-    if result.returncode == -6:
-        # SIGABRT — likely a filesystem or memory issue during file move.
+    # SIGABRT produces -6 on Unix; on Windows crash exit codes differ.
+    if sys.platform != "win32" and result.returncode == -6:
         print(f"  ⚠️  Whisper model download was interrupted (SIGABRT).", flush=True)
         print(f"     This can happen due to disk space or filesystem issues.", flush=True)
         print(f"     Restart Jarvis to retry the download.", flush=True)
@@ -1988,9 +1995,13 @@ class VoiceListener(threading.Thread):
                         if cache_cleared:
                             try:
                                 print(f"     🎤 Re-downloading Whisper '{model_name}'...", flush=True)
+                                # Pre-download with subprocess isolation so a SIGABRT
+                                # during re-download doesn't kill the entire process.
+                                if model_name not in ("", None):
+                                    _pre_download_whisper_model_safely(model_name)
                                 self.model = WhisperModel(
                                     model_name, device=try_device, compute_type=try_compute,
-                                    cpu_threads=cpu_threads, local_files_only=False,
+                                    cpu_threads=cpu_threads, local_files_only=True,
                                 )
                                 self._apply_whisper_load_success(
                                     model_name, try_device, try_compute,
@@ -2027,9 +2038,14 @@ class VoiceListener(threading.Thread):
                             print(f"  ⏳ Rate limited by HuggingFace, retrying in {wait}s ({retry_num}/{_max_retries})...", flush=True)
                             time.sleep(wait)
                             try:
+                                # Pre-download with subprocess isolation before each
+                                # retry so a SIGABRT during download doesn't kill
+                                # the entire process.
+                                if model_name not in ("", None):
+                                    _pre_download_whisper_model_safely(model_name)
                                 self.model = WhisperModel(
                                     model_name, device=try_device, compute_type=try_compute,
-                                    cpu_threads=cpu_threads, local_files_only=False,
+                                    cpu_threads=cpu_threads, local_files_only=True,
                                 )
                                 self._apply_whisper_load_success(
                                     model_name, try_device, try_compute,

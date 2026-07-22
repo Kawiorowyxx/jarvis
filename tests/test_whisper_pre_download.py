@@ -34,6 +34,9 @@ class TestPreDownloadSubprocess:
             script = mock_run.call_args[0][0][2]
             assert "download_model" in script
             assert "small" in script
+            # Verify the ImportError guard is present
+            assert "from faster_whisper.utils import download_model" in script
+            assert "ImportError" in script
 
     def test_returns_false_on_subprocess_failure(self):
         """Returns False when the subprocess exits with non-zero."""
@@ -66,10 +69,25 @@ class TestPreDownloadSubprocess:
             result = self._call("tiny")
             assert result is False
 
+    def test_returns_false_on_subprocess_startup_failure(self):
+        """Returns False when subprocess.run raises OSError."""
+        import subprocess as _real_subprocess
+        with patch.object(_real_subprocess, "run") as mock_run:
+            mock_run.side_effect = OSError("sys.executable not found")
+
+            result = self._call("small")
+            assert result is False
+
     def test_returns_false_when_faster_whisper_unavailable(self):
         """Returns False immediately when FASTER_WHISPER_AVAILABLE is False."""
         with patch("jarvis.listening.listener.FASTER_WHISPER_AVAILABLE", False):
             result = self._call("small")
+            assert result is False
+
+    def test_returns_false_when_faster_whisper_unavailable_and_model_empty(self):
+        """Returns False when FASTER_WHISPER_AVAILABLE is False and model is empty."""
+        with patch("jarvis.listening.listener.FASTER_WHISPER_AVAILABLE", False):
+            result = self._call("")
             assert result is False
 
 
