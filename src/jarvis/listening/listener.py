@@ -343,6 +343,66 @@ def _clear_corrupted_whisper_cache(error_message: str) -> bool:
         return False
 
 
+def _pre_download_whisper_model_safely(model_name: str) -> bool:
+    """Download and cache Whisper model files using subprocess isolation.
+
+    ``WhisperModel()`` internally triggers a download from HuggingFace Hub
+    when the model is not cached. That download path can raise SIGABRT
+    (from C-level file operations in ``huggingface_hub``) which bypasses
+    Python's exception handling and kills the entire process. This function
+    isolates the download in a subprocess so a SIGABRT only kills the child.
+
+    Once the model is cached, callers should pass ``local_files_only=True``
+    to ``WhisperModel()`` to avoid re-entering the download path.
+
+    Returns ``True`` if the model was successfully cached.
+    """
+    import subprocess
+    import sys
+    import textwrap
+
+    if not FASTER_WHISPER_AVAILABLE:
+        return False
+
+    # Build a self-contained script that downloads the model.
+    script = textwrap.dedent(f"""\
+        import sys
+        sys.argv[0] = "jarvis-whisper-download"
+        from faster_whisper.utils import download_model
+        try:
+            download_model({model_name!r})
+        except Exception as exc:
+            print(f"DOWNLOAD_ERROR:{{exc}}", file=sys.stderr)
+            sys.exit(1)
+    """)
+
+    try:
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            capture_output=True, text=True,
+            timeout=300,
+        )
+    except subprocess.TimeoutExpired:
+        debug_log(f"Whisper model download timed out after 300s", "voice")
+        return False
+
+    if result.returncode == 0:
+        debug_log(f"Whisper model '{model_name}' pre-downloaded successfully", "voice")
+        return True
+
+    # Check for non-zero exit (including SIGABRT which produces -6 on Unix).
+    error = result.stderr.strip() or f"exit code {result.returncode}"
+    debug_log(f"Whisper model pre-download failed: {error}", "voice")
+
+    if result.returncode == -6:
+        # SIGABRT — likely a filesystem or memory issue during file move.
+        print(f"  ⚠️  Whisper model download was interrupted (SIGABRT).", flush=True)
+        print(f"     This can happen due to disk space or filesystem issues.", flush=True)
+        print(f"     Restart Jarvis to retry the download.", flush=True)
+
+    return False
+
+
 
 @contextmanager
 def _serialised_stream(stream):
@@ -1870,13 +1930,27 @@ class VoiceListener(threading.Thread):
             last_error = None
             used_device = device
             used_compute = compute
+
+            # Pre-download the model using subprocess isolation to protect
+            # against SIGABRT from C-level file operations during download
+            # (https://github.com/isair/jarvis/issues/544). If the model is
+            # already cached (returning user), the subprocess completes near-
+            # instantly. Passing ``local_files_only=True`` to ``WhisperModel``
+            # then prevents it from entering the download path internally,
+            # avoiding the SIGABRT risk entirely.
+            local_only = (
+                _pre_download_whisper_model_safely(model_name)
+                if model_name not in ("", None)
+                else False
+            )
+
             for try_device, try_compute in configs_to_try:
                 try:
                     cpu_threads = (os.cpu_count() or 4) if try_device in ("cpu", "auto") else 0
                     print(f"     🎤 Loading Whisper '{model_name}' (device={try_device}, compute={try_compute})...", flush=True)
                     self.model = WhisperModel(
                         model_name, device=try_device, compute_type=try_compute,
-                        cpu_threads=cpu_threads,
+                        cpu_threads=cpu_threads, local_files_only=local_only,
                     )
                     self._apply_whisper_load_success(
                         model_name, try_device, try_compute,
@@ -1916,7 +1990,7 @@ class VoiceListener(threading.Thread):
                                 print(f"     🎤 Re-downloading Whisper '{model_name}'...", flush=True)
                                 self.model = WhisperModel(
                                     model_name, device=try_device, compute_type=try_compute,
-                                    cpu_threads=cpu_threads,
+                                    cpu_threads=cpu_threads, local_files_only=False,
                                 )
                                 self._apply_whisper_load_success(
                                     model_name, try_device, try_compute,
@@ -1955,7 +2029,7 @@ class VoiceListener(threading.Thread):
                             try:
                                 self.model = WhisperModel(
                                     model_name, device=try_device, compute_type=try_compute,
-                                    cpu_threads=cpu_threads,
+                                    cpu_threads=cpu_threads, local_files_only=False,
                                 )
                                 self._apply_whisper_load_success(
                                     model_name, try_device, try_compute,
