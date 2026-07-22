@@ -386,7 +386,8 @@ def _pre_download_whisper_model_safely(model_name: str) -> bool:
     try:
         result = subprocess.run(
             [sys.executable, "-c", script],
-            capture_output=True, text=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
             timeout=300,
         )
     except (subprocess.TimeoutExpired, OSError) as exc:
@@ -398,8 +399,7 @@ def _pre_download_whisper_model_safely(model_name: str) -> bool:
         return True
 
     # Check for non-zero exit.
-    error = result.stderr.strip() or f"exit code {result.returncode}"
-    debug_log(f"Whisper model pre-download failed: {error}", "voice")
+    debug_log(f"Whisper model pre-download failed (exit code {result.returncode})", "voice")
 
     # SIGABRT produces -6 on Unix; on Windows crash exit codes differ.
     if sys.platform != "win32" and result.returncode == -6:
