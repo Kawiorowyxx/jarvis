@@ -352,6 +352,11 @@ def _pre_download_whisper_model_safely(model_name: str) -> bool:
     Python's exception handling and kills the entire process. This function
     isolates the download in a subprocess so a SIGABRT only kills the child.
 
+    When the model is already cached on disk (common case for returning
+    users), the function returns ``True`` immediately without spawning
+    a subprocess, avoiding the overhead of starting a new Python process
+    and importing ``faster_whisper`` / ``ctranslate2`` in it.
+
     Once the model is cached, callers should pass ``local_files_only=True``
     to ``WhisperModel()`` to avoid re-entering the download path.
 
@@ -364,6 +369,14 @@ def _pre_download_whisper_model_safely(model_name: str) -> bool:
     if not FASTER_WHISPER_AVAILABLE:
         return False
 
+    # Fast path: if the model is already on disk, return True without
+    # spawning a subprocess. On Windows, spawning a Python subprocess
+    # that imports faster-whisper/ctranslate2 is expensive (DLL probe)
+    # and can take 10+ seconds or hang. Skip it entirely when cached.
+    if _is_whisper_model_cached(model_name):
+        debug_log(f"Whisper model '{model_name}' already cached", "voice")
+        return True
+
     # Build a self-contained script that downloads the model.
     # {model_name!r} uses repr() which correctly escapes quotes, backslashes,
     # and newlines — safe against injection since the script runs as
@@ -374,12 +387,10 @@ def _pre_download_whisper_model_safely(model_name: str) -> bool:
         try:
             from faster_whisper.utils import download_model
         except ImportError:
-            print("DOWNLOAD_ERROR:faster-whisper not available in subprocess", file=sys.stderr)
             sys.exit(1)
         try:
             download_model({model_name!r})
-        except Exception as exc:
-            print(f"DOWNLOAD_ERROR:{{exc}}", file=sys.stderr)
+        except Exception:
             sys.exit(1)
     """)
 
@@ -398,7 +409,6 @@ def _pre_download_whisper_model_safely(model_name: str) -> bool:
         debug_log(f"Whisper model '{model_name}' pre-downloaded successfully", "voice")
         return True
 
-    # Check for non-zero exit.
     debug_log(f"Whisper model pre-download failed (exit code {result.returncode})", "voice")
 
     # SIGABRT produces -6 on Unix; on Windows crash exit codes differ.
@@ -408,6 +418,76 @@ def _pre_download_whisper_model_safely(model_name: str) -> bool:
         print(f"     Restart Jarvis to retry the download.", flush=True)
 
     return False
+
+
+def _get_hf_cache_path() -> Path:
+    """Return the HuggingFace Hub cache directory path.
+
+    Uses the ``HF_HOME`` or ``HF_HUB_CACHE`` environment variable if set,
+    otherwise defaults to ``~/.cache/huggingface/hub``.
+    """
+    from pathlib import Path
+    import os
+
+    hub_cache = os.environ.get("HF_HUB_CACHE") or os.path.join(
+        os.environ.get("HF_HOME", os.path.join(os.path.expanduser("~"), ".cache", "huggingface")),
+        "hub",
+    )
+    return Path(hub_cache)
+
+
+# Map of shorthand model names to HuggingFace Hub repo IDs.
+# Kept in sync with faster_whisper.utils._MODELS.
+_WHISPER_MODEL_REPOS = {
+    "tiny": "Systran/faster-whisper-tiny",
+    "tiny.en": "Systran/faster-whisper-tiny.en",
+    "base": "Systran/faster-whisper-base",
+    "base.en": "Systran/faster-whisper-base.en",
+    "small": "Systran/faster-whisper-small",
+    "small.en": "Systran/faster-whisper-small.en",
+    "distil-small.en": "Systran/faster-whisper-distil-small.en",
+    "medium": "Systran/faster-whisper-medium",
+    "medium.en": "Systran/faster-whisper-medium.en",
+    "distil-medium.en": "Systran/faster-whisper-distil-medium.en",
+    "large-v1": "Systran/faster-whisper-large-v1",
+    "large-v2": "Systran/faster-whisper-large-v2",
+    "large-v3": "Systran/faster-whisper-large-v3",
+    "large": "Systran/faster-whisper-large-v3",
+    "distil-large-v2": "Systran/faster-whisper-distil-large-v2",
+    "distil-large-v3": "Systran/faster-whisper-distil-large-v3",
+    "large-v3-turbo": "Systran/faster-whisper-large-v3-turbo",
+}
+
+
+def _resolve_whisper_repo_id(model_name: str) -> str | None:
+    """Resolve a Whisper model name to a HuggingFace Hub repo ID.
+
+    Handles both shorthand names (``"small"``) and full repo IDs
+    (``"CustomOrg/custom-whisper"``). Returns ``None`` if the name
+    is unknown.
+    """
+    if "/" in model_name:
+        return model_name
+    return _WHISPER_MODEL_REPOS.get(model_name)
+
+
+def _is_whisper_model_cached(model_name: str) -> bool:
+    """Check whether a Whisper model is already cached on disk.
+
+    Inspects the HuggingFace Hub cache directory for the model's
+    ``snapshots`` directory. Returns ``True`` if snapshots exist,
+    meaning the model has been fully downloaded at some point.
+    This is a lightweight filesystem check — no imports, no subprocess.
+    """
+    repo_id = _resolve_whisper_repo_id(model_name)
+    if repo_id is None:
+        return False
+
+    cache_dir = _get_hf_cache_path()
+    model_cache = cache_dir / f"models--{repo_id.replace('/', '--')}"
+    snapshots_dir = model_cache / "snapshots"
+
+    return snapshots_dir.is_dir() and any(snapshots_dir.iterdir())
 
 
 
