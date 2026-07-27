@@ -163,13 +163,6 @@ class OpenAICompatibleBackend(LLMBackend):
                     content = msg.get("content")
                     if isinstance(content, str) and content.strip():
                         return content
-                    # Some reasoning models (e.g. Qwen3.5 on LM Studio)
-                    # put the entire output in ``reasoning_content`` and
-                    # leave ``content`` empty. Fall back to it so
-                    # classification calls still work.
-                    reasoning = msg.get("reasoning_content")
-                    if isinstance(reasoning, str) and reasoning.strip():
-                        return reasoning
                 debug_log(
                     f"OpenAICompatibleBackend.direct: empty content from response keys={list(data.keys())}",
                     "llm",
