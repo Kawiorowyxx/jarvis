@@ -8,7 +8,7 @@ from ..debug import debug_log
 
 def call_llm_direct(*, cfg, chat_model, system_prompt, user_content,
                     timeout_sec=10.0, thinking=False, num_ctx=4096,
-                    temperature=None):
+                    temperature=None, max_tokens=None):
     """Local indirection: route enrichment LLM calls through the backend
     configured by ``cfg.llm_provider``. Tests patch this single symbol
     to intercept every enrichment call."""
@@ -16,6 +16,7 @@ def call_llm_direct(*, cfg, chat_model, system_prompt, user_content,
         chat_model, system_prompt, user_content,
         timeout_sec=timeout_sec, thinking=thinking,
         num_ctx=num_ctx, temperature=temperature,
+        max_tokens=max_tokens,
     )
 
 
@@ -97,6 +98,7 @@ Examples:
                 user_content=f"Extract search parameters from: {query}",
                 timeout_sec=timeout_sec,
                 thinking=thinking,
+                max_tokens=50,
             )
 
             if response:

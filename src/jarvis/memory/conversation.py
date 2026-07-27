@@ -13,13 +13,15 @@ from ..utils.redact import redact, scrub_secrets
 
 
 def _direct_llm(cfg, system_prompt: str, user_content: str, *,
-                timeout_sec: float = 30.0, thinking: bool = False) -> Optional[str]:
+                timeout_sec: float = 30.0, thinking: bool = False,
+                max_tokens: Optional[int] = None) -> Optional[str]:
     """Single intercept for chat-direct calls in this module. Tests patch
     ``conversation._direct_llm`` to capture every diary/summary LLM round-trip
     without reaching through the backend ABC."""
     return get_llm_backend(cfg).direct(
         cfg.llm_chat_model, system_prompt, user_content,
         timeout_sec=timeout_sec, thinking=thinking,
+        max_tokens=max_tokens,
     )
 
 

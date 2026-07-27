@@ -45,7 +45,7 @@ from ..llm import get_llm_backend, resolve_model, Tier
 
 def call_llm_direct(*, cfg, chat_model, system_prompt, user_content,
                     timeout_sec=10.0, thinking=False, num_ctx=4096,
-                    temperature=None):
+                    temperature=None, max_tokens=None):
     """Local indirection: route the planner's chat call through the
     backend configured by ``cfg.llm_provider``.
 
@@ -56,6 +56,7 @@ def call_llm_direct(*, cfg, chat_model, system_prompt, user_content,
         chat_model, system_prompt, user_content,
         timeout_sec=timeout_sec, thinking=thinking,
         num_ctx=num_ctx, temperature=temperature,
+        max_tokens=max_tokens,
     )
 
 

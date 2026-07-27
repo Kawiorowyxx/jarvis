@@ -125,6 +125,7 @@ class OpenAICompatibleBackend(LLMBackend):
         thinking: bool = False,
         num_ctx: int = 4096,
         temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
     ) -> Optional[str]:
         # ``num_ctx`` and ``thinking`` have no equivalent in the OpenAI
         # shape; servers that need a fixed context window configure it
@@ -142,6 +143,8 @@ class OpenAICompatibleBackend(LLMBackend):
         }
         if temperature is not None:
             payload["temperature"] = temperature
+        if max_tokens is not None:
+            payload["max_tokens"] = max_tokens
 
         try:
             with requests.post(
@@ -160,6 +163,13 @@ class OpenAICompatibleBackend(LLMBackend):
                     content = msg.get("content")
                     if isinstance(content, str) and content.strip():
                         return content
+                    # Some reasoning models (e.g. Qwen3.5 on LM Studio)
+                    # put the entire output in ``reasoning_content`` and
+                    # leave ``content`` empty. Fall back to it so
+                    # classification calls still work.
+                    reasoning = msg.get("reasoning_content")
+                    if isinstance(reasoning, str) and reasoning.strip():
+                        return reasoning
                 debug_log(
                     f"OpenAICompatibleBackend.direct: empty content from response keys={list(data.keys())}",
                     "llm",

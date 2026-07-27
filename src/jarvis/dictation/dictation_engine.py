@@ -462,6 +462,7 @@ def _llm_clean_dictation(text: str, cfg, *, model: str = "gemma4:e2b", thinking:
             model, system_prompt, text,
             timeout_sec=5.0,
             thinking=thinking,
+            max_tokens=50,
         )
         if cleaned and cleaned.strip():
             cleaned = cleaned.strip()

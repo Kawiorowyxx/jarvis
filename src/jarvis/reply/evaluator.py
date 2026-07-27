@@ -28,7 +28,7 @@ from ..utils.redact import redact
 
 def call_llm_direct(*, cfg, chat_model, system_prompt, user_content,
                     timeout_sec=10.0, thinking=False, num_ctx=4096,
-                    temperature=None):
+                    temperature=None, max_tokens=None):
     """Local indirection: route the evaluator's chat call through the
     backend configured by ``cfg.llm_provider``. Tests patch this symbol
     to intercept the single LLM call point."""
@@ -36,6 +36,7 @@ def call_llm_direct(*, cfg, chat_model, system_prompt, user_content,
         chat_model, system_prompt, user_content,
         timeout_sec=timeout_sec, thinking=thinking,
         num_ctx=num_ctx, temperature=temperature,
+        max_tokens=max_tokens,
     )
 
 

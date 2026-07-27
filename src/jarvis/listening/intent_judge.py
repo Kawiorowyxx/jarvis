@@ -438,6 +438,13 @@ Examples:
                 content = message.get("content")
                 if isinstance(content, str):
                     response_text = content
+                if not response_text:
+                    # Some reasoning models (e.g. Qwen3.5 on LM Studio)
+                    # put the entire output in ``reasoning_content`` and
+                    # leave ``content`` empty.
+                    reasoning = message.get("reasoning_content")
+                    if isinstance(reasoning, str):
+                        response_text = reasoning
             if not response_text:
                 # Ollama's /api/generate returned ``response``; chat() shape
                 # surfaces content under ``message.content``. Some adapters
