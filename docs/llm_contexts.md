@@ -207,7 +207,7 @@ Every distinct LLM call in Jarvis, what feeds it, what consumes it, and how it i
 
 ## Size-aware auto switches
 
-Driven by `detect_model_size(model_name) → SMALL (≤7B) | LARGE (8B+)`:
+Driven by `detect_model_size(model_name) → SMALL (≤7.5B) | LARGE (>7.5B)` — uses a regex to extract the parameter count from the model name, handles MoE (`8x7b`) as LARGE, and treats the `gemma4` family as always SMALL:
 
 | Feature | SMALL | LARGE |
 |---------|-------|-------|
