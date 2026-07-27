@@ -121,6 +121,7 @@ def _rewrite_diary_summary(
             _REWRITE_DEFLECTION_SYSTEM_PROMPT,
             user_prompt,
             timeout_sec=timeout_sec,
+            max_tokens=200,
         )
     except Exception as e:
         debug_log(
@@ -458,6 +459,7 @@ def optimise_diary_topics(
             _TOPIC_OPTIMISE_SYSTEM_PROMPT,
             user_content,
             timeout_sec=60.0,
+            max_tokens=200,
         )
         if raw:
             # Strip markdown fences if the model wrapped the JSON.
@@ -1248,6 +1250,7 @@ TOPICS: [topic1, topic2, topic3]"""
             response = _direct_llm(
                 cfg, system_prompt, user_prompt,
                 timeout_sec=timeout_sec, thinking=thinking,
+                max_tokens=300,
             )
 
         if not response:

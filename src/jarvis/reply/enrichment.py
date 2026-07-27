@@ -290,6 +290,7 @@ def _distil_batch(
             user_content=user_content,
             timeout_sec=timeout_sec,
             thinking=thinking,
+            max_tokens=200,
         )
     except Exception as e:
         debug_log(f"memory digest batch failed: {e}", "memory")
@@ -523,6 +524,7 @@ def _distil_tool_batch(
             user_content=user_content,
             timeout_sec=timeout_sec,
             thinking=thinking,
+            max_tokens=300,
         )
     except Exception as e:
         debug_log(f"tool digest batch failed: {e}", "tools")
@@ -857,6 +859,7 @@ def digest_loop_for_max_turns(
             user_content=user_content,
             timeout_sec=timeout_sec,
             thinking=thinking,
+            max_tokens=200,
         )
     except Exception as e:
         debug_log(f"max-turn loop digest failed: {e}", "planning")

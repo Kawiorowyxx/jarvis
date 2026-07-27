@@ -477,6 +477,7 @@ def plan_query(
             timeout_sec=effective_timeout,
             thinking=False,
             num_ctx=8192,
+            max_tokens=150,
         )
     except Exception as exc:  # pragma: no cover — defensive
         debug_log(f"planner: LLM call failed — {exc}", "planning")
@@ -764,6 +765,7 @@ def resolve_next_tool_call(
             timeout_sec=effective_timeout,
             thinking=False,
             num_ctx=8192,
+            max_tokens=100,
         )
     except Exception as exc:  # pragma: no cover — defensive
         debug_log(f"planner.resolve_next_tool_call: LLM failed — {exc}", "planning")

@@ -85,6 +85,7 @@ def extract_and_log_meal(db: Database, cfg: Any, original_text: str, source_app:
         user_content=user_prompt,
         timeout_sec=cfg.llm_chat_timeout_sec,
         thinking=getattr(cfg, 'llm_thinking_enabled', False),
+        max_tokens=100,
     ) or ""
     text = (raw or "").strip()
     if text.upper() == "NONE":
@@ -155,6 +156,7 @@ def generate_followups_for_meal(cfg: Any, description: str, approx: str) -> str:
         user_content=follow_user,
         timeout_sec=cfg.llm_chat_timeout_sec,
         thinking=getattr(cfg, 'llm_thinking_enabled', False),
+        max_tokens=100,
     ) or ""
     return (follow_text or "").strip()
 

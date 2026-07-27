@@ -208,6 +208,7 @@ def extract_graph_memories(
         timeout_sec=timeout_sec,
         thinking=thinking,
         temperature=0.0,
+        max_tokens=300,
     )
 
     if not response:
@@ -303,6 +304,7 @@ def _llm_pick_best_child(
         user_content=user_content,
         timeout_sec=timeout_sec,
         thinking=thinking,
+        max_tokens=50,
     )
 
     if not response:
@@ -635,6 +637,7 @@ def merge_node_data(
         timeout_sec=timeout_sec,
         thinking=thinking,
         temperature=0.0,
+        max_tokens=300,
     )
 
     if not response:
@@ -761,6 +764,7 @@ def auto_split_node(
         user_content=user_content,
         timeout_sec=timeout_sec,
         thinking=thinking,
+        max_tokens=200,
     )
 
     if not response:
