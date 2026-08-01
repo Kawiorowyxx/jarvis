@@ -182,10 +182,10 @@ def get_required_models() -> List[str]:
     providers.
 
     Only models that actually run on Ollama are required:
-    - Chat model + intent-judge model â€” when the chat provider is Ollama
+    - Chat model + intent-judge model Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ when the chat provider is Ollama
       (both run through the chat backend). Skipped for an OpenAI-compatible
       chat provider, where those are remote model names, not Ollama pulls.
-    - Embedding model â€” when the effective embedding provider is Ollama
+    - Embedding model Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ when the effective embedding provider is Ollama
       (covers the advanced split where chat is remote but embeddings are
       local). Skipped when embeddings are remote.
 
@@ -196,6 +196,8 @@ def get_required_models() -> List[str]:
         llm_provider = getattr(cfg, "llm_provider", "ollama") or "ollama"
         embed_provider = getattr(cfg, "embedding_provider", "") or llm_provider
         models = []
+        # Kawior DEBUG
+        import os; print(f"[KAWIOR DEBUG] get_required_models: llm_provider={llm_provider!r}, embed_provider={embed_provider!r}", flush=True)
 
         # Chat model runs on the chat provider's backend.
         if llm_provider != "openai_compatible":
@@ -338,7 +340,7 @@ def should_show_setup_wizard(force_server_check: bool = False) -> bool:
     if os.environ.get("JARVIS_SKIP_SETUP", "").strip().lower() in ("1", "true", "yes"):
         return False
     # An OpenAI-compatible user has opted out of the local Ollama stack,
-    # so the Ollama-centric prerequisites don't apply â€” never auto-show.
+    # so the Ollama-centric prerequisites don't apply Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ never auto-show.
     # (The wizard can still be opened manually from the tray to switch back.)
     try:
         cfg = load_settings()
@@ -399,7 +401,7 @@ try:
         )
     except Exception as e:
         if _sys.platform == 'win32':
-            print(f"  âš ď¸Ź  Location utilities import failed: {e}", flush=True)
+            print(f"  Ä‚ËÄąË‡Ă‚Â Ă„ĹąĂ‚Â¸ÄąÄ…  Location utilities import failed: {e}", flush=True)
         # Provide stubs so the wizard can still run without location features
         get_location_info = lambda *a, **k: {}
         get_location_context = lambda *a, **k: "Location: Unknown"
@@ -448,9 +450,9 @@ class _KeepAliveWorker(QThread):
     completion signal is emitted at the end of run(), so the slot can run
     while the OS thread is still winding down; dropping the last Python
     reference at that point destroys a running QThread and Qt aborts the
-    whole app ("Fatal Python error: Aborted" â€” #509, #407, #239).
+    whole app ("Fatal Python error: Aborted" Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ #509, #407, #239).
 
-    Subclasses must NOT shadow the built-in ``finished`` signal â€” the
+    Subclasses must NOT shadow the built-in ``finished`` signal Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ the
     keep-alive registry relies on it to know when release is safe.
     """
 
@@ -510,11 +512,11 @@ class CommandWorker(_KeepAliveWorker):
             process.wait()
 
             if process.returncode == 0:
-                self.completed.emit(True, "âś… Command completed successfully")
+                self.completed.emit(True, "Ä‚ËÄąâ€şĂ˘â‚¬Â¦ Command completed successfully")
             else:
-                self.completed.emit(False, f"âťŚ Command failed with exit code {process.returncode}")
+                self.completed.emit(False, f"Ä‚ËÄąÄ„ÄąĹˇ Command failed with exit code {process.returncode}")
         except Exception as e:
-            self.completed.emit(False, f"âťŚ Error: {str(e)}")
+            self.completed.emit(False, f"Ä‚ËÄąÄ„ÄąĹˇ Error: {str(e)}")
 
 
 class SetupWizard(QWizard):
@@ -522,7 +524,7 @@ class SetupWizard(QWizard):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("đźš€ Jarvis Setup Wizard")
+        self.setWindowTitle("Ă„â€ÄąĹźÄąË‡Ă˘â€šÂ¬ Jarvis Setup Wizard")
         self.setWizardStyle(QWizard.WizardStyle.ModernStyle)
         self.setMinimumSize(700, 875)
 
@@ -563,9 +565,9 @@ class SetupWizard(QWizard):
         self.setStartId(self.mlx_whisper_page_id)
 
         # Custom button labels
-        self.setButtonText(QWizard.WizardButton.NextButton, "Next â†’")
-        self.setButtonText(QWizard.WizardButton.BackButton, "â† Back")
-        self.setButtonText(QWizard.WizardButton.FinishButton, "đźŽ‰ Start Jarvis")
+        self.setButtonText(QWizard.WizardButton.NextButton, "Next Ä‚ËĂ˘â‚¬Â Ă˘â‚¬â„˘")
+        self.setButtonText(QWizard.WizardButton.BackButton, "Ä‚ËĂ˘â‚¬Â Ă‚Â Back")
+        self.setButtonText(QWizard.WizardButton.FinishButton, "Ă„â€ÄąĹźÄąËťĂ˘â‚¬Â° Start Jarvis")
         self.setButtonText(QWizard.WizardButton.CancelButton, "Exit")
 
         # Store status for sharing between pages
@@ -575,7 +577,7 @@ class SetupWizard(QWizard):
 
     def ollama_entry_page_id(self) -> int:
         """First Ollama-flow page to show, based on detection status:
-        install (CLI missing) â†’ server (not running) â†’ models. Shared by the
+        install (CLI missing) Ä‚ËĂ˘â‚¬Â Ă˘â‚¬â„˘ server (not running) Ä‚ËĂ˘â‚¬Â Ă˘â‚¬â„˘ models. Shared by the
         provider-choice page so the Ollama branch lands on the right step."""
         status = self.ollama_status
         if status is None or not status.is_cli_installed:
@@ -666,7 +668,7 @@ class WelcomePage(QWizardPage):
         # Header
         header_layout = QVBoxLayout()
 
-        title = QLabel("đź¤– Welcome to Jarvis")
+        title = QLabel("Ă„â€ÄąĹźĂ‚Â¤Ă˘â‚¬â€ś Welcome to Jarvis")
         title.setObjectName("title")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         header_layout.addWidget(title)
@@ -686,19 +688,19 @@ class WelcomePage(QWizardPage):
         status_layout.setContentsMargins(24, 24, 24, 24)
         status_layout.setSpacing(12)
 
-        status_title = QLabel("đź“‹ System Status")
+        status_title = QLabel("Ă„â€ÄąĹźĂ˘â‚¬Ĺ›Ă˘â‚¬Ä… System Status")
         status_title.setObjectName("section_title")
         status_layout.addWidget(status_title)
         status_layout.addSpacing(8)
 
         # Status items
-        self.cli_status = self._create_status_row("đź’» Ollama CLI", "Checking...")
-        self.server_status = self._create_status_row("đźŚ Ollama Server", "Checking...")
-        self.models_status = self._create_status_row("đź§  AI Models", "Checking...")
-        self.location_status = self._create_status_row("đź“Ť Location", "Checking...")
+        self.cli_status = self._create_status_row("Ă„â€ÄąĹźĂ˘â‚¬â„˘Ă‚Â» Ollama CLI", "Checking...")
+        self.server_status = self._create_status_row("Ă„â€ÄąĹźÄąĹˇĂ‚Â Ollama Server", "Checking...")
+        self.models_status = self._create_status_row("Ă„â€ÄąĹźĂ‚Â§Ă‚Â  AI Models", "Checking...")
+        self.location_status = self._create_status_row("Ă„â€ÄąĹźĂ˘â‚¬Ĺ›ÄąÂ¤ Location", "Checking...")
 
         # MLX Whisper status (only shown on Apple Silicon)
-        self.mlx_whisper_status = self._create_status_row("đźŽ¤ MLX Whisper", "Checking...")
+        self.mlx_whisper_status = self._create_status_row("Ă„â€ÄąĹźÄąËťĂ‚Â¤ MLX Whisper", "Checking...")
         self._is_apple_silicon = is_apple_silicon()
 
         status_layout.addWidget(self.cli_status)
@@ -715,7 +717,7 @@ class WelcomePage(QWizardPage):
         layout.addWidget(self.status_card)
 
         # Refresh button
-        self.refresh_btn = QPushButton("đź”„ Refresh Status")
+        self.refresh_btn = QPushButton("Ă„â€ÄąĹźĂ˘â‚¬ĹĄĂ˘â‚¬Ĺľ Refresh Status")
         self.refresh_btn.setObjectName("secondary")
         self.refresh_btn.clicked.connect(self._refresh_status)
 
@@ -776,7 +778,7 @@ class WelcomePage(QWizardPage):
     def _refresh_status(self):
         """Refresh Ollama status."""
         self.refresh_btn.setEnabled(False)
-        self.refresh_btn.setText("âŹł Checking...")
+        self.refresh_btn.setText("Ä‚ËÄąÄ…Äąâ€š Checking...")
 
         # Reset status labels
         for row in [self.cli_status, self.server_status, self.models_status]:
@@ -793,7 +795,7 @@ class WelcomePage(QWizardPage):
     def _on_status_checked(self, status: OllamaStatus):
         """Handle status check completion."""
         self.refresh_btn.setEnabled(True)
-        self.refresh_btn.setText("đź”„ Refresh Status")
+        self.refresh_btn.setText("Ă„â€ÄąĹźĂ˘â‚¬ĹĄĂ˘â‚¬Ĺľ Refresh Status")
 
         # Store status in wizard
         wizard = self.wizard()
@@ -802,25 +804,25 @@ class WelcomePage(QWizardPage):
 
         # Update CLI status
         if status.is_cli_installed:
-            self._update_status_row(self.cli_status, f"âś… Installed ({status.cli_path})", True)
+            self._update_status_row(self.cli_status, f"Ä‚ËÄąâ€şĂ˘â‚¬Â¦ Installed ({status.cli_path})", True)
         else:
-            self._update_status_row(self.cli_status, "âťŚ Not installed", False)
+            self._update_status_row(self.cli_status, "Ä‚ËÄąÄ„ÄąĹˇ Not installed", False)
 
         # Update server status
         if status.is_server_running:
-            self._update_status_row(self.server_status, f"âś… Running (v{status.server_version})", True)
+            self._update_status_row(self.server_status, f"Ä‚ËÄąâ€şĂ˘â‚¬Â¦ Running (v{status.server_version})", True)
         else:
-            self._update_status_row(self.server_status, "âťŚ Not running", False)
+            self._update_status_row(self.server_status, "Ä‚ËÄąÄ„ÄąĹˇ Not running", False)
 
         # Update models status
         if not status.missing_models:
-            self._update_status_row(self.models_status, f"âś… All models ready ({len(status.installed_models)} installed)", True)
+            self._update_status_row(self.models_status, f"Ä‚ËÄąâ€şĂ˘â‚¬Â¦ All models ready ({len(status.installed_models)} installed)", True)
         else:
-            self._update_status_row(self.models_status, f"âš ď¸Ź Missing: {', '.join(status.missing_models)}", False)
+            self._update_status_row(self.models_status, f"Ä‚ËÄąË‡Ă‚Â Ă„ĹąĂ‚Â¸ÄąÄ… Missing: {', '.join(status.missing_models)}", False)
 
         # Update location status
         if not is_location_available():
-            self._update_status_row(self.location_status, "âš ď¸Ź Database not installed", False)
+            self._update_status_row(self.location_status, "Ä‚ËÄąË‡Ă‚Â Ă„ĹąĂ‚Â¸ÄąÄ… Database not installed", False)
         else:
             try:
                 cfg = load_settings()
@@ -832,11 +834,11 @@ class WelcomePage(QWizardPage):
             except Exception:
                 location_context = get_location_context(auto_detect=True, resolve_cgnat_public_ip=True)
             if location_context == "Location: Unknown":
-                self._update_status_row(self.location_status, "âš ď¸Ź Not configured", False)
+                self._update_status_row(self.location_status, "Ä‚ËÄąË‡Ă‚Â Ă„ĹąĂ‚Â¸ÄąÄ… Not configured", False)
             else:
                 # Extract just the location part after "Location: "
                 loc_text = location_context.replace("Location: ", "")
-                self._update_status_row(self.location_status, f"âś… {loc_text}", True)
+                self._update_status_row(self.location_status, f"Ä‚ËÄąâ€şĂ˘â‚¬Â¦ {loc_text}", True)
 
         # Update MLX Whisper status (Apple Silicon only)
         if self._is_apple_silicon:
@@ -845,13 +847,13 @@ class WelcomePage(QWizardPage):
                 wizard.mlx_whisper_status = mlx_status
 
             if mlx_status.is_fully_setup:
-                self._update_status_row(self.mlx_whisper_status, "âś… Ready (GPU acceleration)", True)
+                self._update_status_row(self.mlx_whisper_status, "Ä‚ËÄąâ€şĂ˘â‚¬Â¦ Ready (GPU acceleration)", True)
             elif not mlx_status.is_ffmpeg_installed:
-                self._update_status_row(self.mlx_whisper_status, "âš ď¸Ź FFmpeg not installed", False)
+                self._update_status_row(self.mlx_whisper_status, "Ä‚ËÄąË‡Ă‚Â Ă„ĹąĂ‚Â¸ÄąÄ… FFmpeg not installed", False)
             elif not mlx_status.is_mlx_whisper_installed:
-                self._update_status_row(self.mlx_whisper_status, "âš ď¸Ź Not installed", False)
+                self._update_status_row(self.mlx_whisper_status, "Ä‚ËÄąË‡Ă‚Â Ă„ĹąĂ‚Â¸ÄąÄ… Not installed", False)
             else:
-                self._update_status_row(self.mlx_whisper_status, "âš ď¸Ź Setup incomplete", False)
+                self._update_status_row(self.mlx_whisper_status, "Ä‚ËÄąË‡Ă‚Â Ă„ĹąĂ‚Â¸ÄąÄ… Setup incomplete", False)
 
         # Enable/disable navigation based on status
         self.completeChanged.emit()
@@ -874,7 +876,7 @@ class ProviderChoicePage(QWizardPage):
     """Choose which local runtime serves the LLM: Ollama (the bundled
     default) or an OpenAI-compatible server (LM Studio, oMLX, llama.cpp's
     ``llama-server``, vLLM, LocalAI). The choice branches the rest of the
-    wizard â€” Ollama continues to the install/server/models flow, while
+    wizard Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ Ollama continues to the install/server/models flow, while
     OpenAI-compatible jumps to a connection-config page and skips the
     Ollama-specific pages entirely."""
 
@@ -887,7 +889,7 @@ class ProviderChoicePage(QWizardPage):
         layout.setSpacing(16)
         layout.setContentsMargins(40, 40, 40, 40)
 
-        title = QLabel("đź”Ś Choose Your LLM Provider")
+        title = QLabel("Ă„â€ÄąĹźĂ˘â‚¬ĹĄÄąĹˇ Choose Your LLM Provider")
         title.setObjectName("title")
         layout.addWidget(title)
 
@@ -907,7 +909,7 @@ class ProviderChoicePage(QWizardPage):
         # sharing a direct parent, which these do not).
         self._button_group = QButtonGroup(self)
 
-        self._ollama_radio = QRadioButton("  đź¦™  Ollama (recommended)")
+        self._ollama_radio = QRadioButton("  Ă„â€ÄąĹźĂ‚Â¦Ă˘â€žË  Ollama (recommended)")
         self._ollama_radio.setChecked(True)
         self._button_group.addButton(self._ollama_radio)
         ollama_card = self._provider_card(
@@ -918,7 +920,7 @@ class ProviderChoicePage(QWizardPage):
         )
         layout.addWidget(ollama_card)
 
-        self._openai_radio = QRadioButton("  đź”—  OpenAI-compatible server")
+        self._openai_radio = QRadioButton("  Ă„â€ÄąĹźĂ˘â‚¬ĹĄĂ˘â‚¬â€ť  OpenAI-compatible server")
         self._button_group.addButton(self._openai_radio)
         openai_card = self._provider_card(
             self._openai_radio,
@@ -973,7 +975,7 @@ class ProviderChoicePage(QWizardPage):
     def validatePage(self) -> bool:
         """Persist the provider choice. Selecting Ollama clears any
         OpenAI-compatible overrides so the Ollama settings become
-        authoritative again â€” no stale base URL / key / model is left
+        authoritative again Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ no stale base URL / key / model is left
         pointing at a former remote server."""
         try:
             from jarvis.config import default_config_path, _load_json, _save_json
@@ -1105,13 +1107,13 @@ class OpenAICompatiblePage(QWizardPage):
         layout.setSpacing(14)
         layout.setContentsMargins(40, 40, 40, 40)
 
-        title = QLabel("đź”— OpenAI-compatible Server")
+        title = QLabel("Ă„â€ÄąĹźĂ˘â‚¬ĹĄĂ˘â‚¬â€ť OpenAI-compatible Server")
         title.setObjectName("title")
         layout.addWidget(title)
 
         subtitle = QLabel(
             "Point Jarvis at a local server (LM Studio, Ollama, Jan, llama.cpp, "
-            "vLLM, â€¦). Pick your app or let Jarvis find it, then Connect to load "
+            "vLLM, Ä‚ËĂ˘â€šÂ¬Ă‚Â¦). Pick your app or let Jarvis find it, then Connect to load "
             "its models. Only the base URL and chat model are required."
         )
         subtitle.setObjectName("subtitle")
@@ -1132,7 +1134,7 @@ class OpenAICompatiblePage(QWizardPage):
         preset_label.setStyleSheet("font-size: 13px; font-weight: bold;")
         form.addWidget(preset_label)
         self._preset_combo = QComboBox()
-        self._preset_combo.addItem("Select your app (optional)â€¦")
+        self._preset_combo.addItem("Select your app (optional)Ä‚ËĂ˘â€šÂ¬Ă‚Â¦")
         for label, _url in self._KNOWN_SERVERS:
             self._preset_combo.addItem(label)
         self._preset_combo.addItem("Other / custom")
@@ -1147,7 +1149,7 @@ class OpenAICompatiblePage(QWizardPage):
             password=True)
 
         # Connect button + status: fetch the model list, then probe the model.
-        self._connect_btn = QPushButton("đź”Ś Connect & load models")
+        self._connect_btn = QPushButton("Ă„â€ÄąĹźĂ˘â‚¬ĹĄÄąĹˇ Connect & load models")
         self._connect_btn.setObjectName("secondary")
         self._connect_btn.clicked.connect(self._on_connect)
         form.addWidget(self._connect_btn)
@@ -1198,7 +1200,7 @@ class OpenAICompatiblePage(QWizardPage):
         layout.addWidget(form_card)
 
         tip = QLabel(
-            "đź’ˇ  Memory search uses embeddings. If your server has no "
+            "Ă„â€ÄąĹźĂ˘â‚¬â„˘Ă‹â€ˇ  Memory search uses embeddings. If your server has no "
             "embeddings endpoint, leave the embedding model empty and Jarvis "
             "falls back to keyword search."
         )
@@ -1306,10 +1308,10 @@ class OpenAICompatiblePage(QWizardPage):
     def _on_connect(self):
         base_url = (self._base_url_input.text() or "").strip()
         if not base_url:
-            self._connect_status.setText("âš ď¸Ź Enter a base URL first.")
+            self._connect_status.setText("Ä‚ËÄąË‡Ă‚Â Ă„ĹąĂ‚Â¸ÄąÄ… Enter a base URL first.")
             return
         self._connect_btn.setEnabled(False)
-        self._connect_status.setText("âŹł Connectingâ€¦")
+        self._connect_status.setText("Ä‚ËÄąÄ…Äąâ€š ConnectingÄ‚ËĂ˘â€šÂ¬Ă‚Â¦")
         worker = _ModelFetchWorker(base_url, (self._api_key_input.text() or "").strip())
         worker.done.connect(self._on_models_fetched)
         self._fetch_worker = worker  # keep a reference so it isn't GC'd
@@ -1320,21 +1322,21 @@ class OpenAICompatiblePage(QWizardPage):
         if not (reached and models):
             self._connect_btn.setEnabled(True)
             self._connect_status.setText(
-                "âš ď¸Ź Couldn't load models. Check the URL/key and that the server "
+                "Ä‚ËÄąË‡Ă‚Â Ă„ĹąĂ‚Â¸ÄąÄ… Couldn't load models. Check the URL/key and that the server "
                 "is running, or type the model id manually below.")
             self.completeChanged.emit()
             return
-        # Models loaded and a sensible chat default is selected â€” probe the
+        # Models loaded and a sensible chat default is selected Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ probe the
         # model so the user learns up front what works.
         chat = (self._chat_model_combo.currentText() or "").strip()
         base = (self._base_url_input.text() or "").strip()
         if base and chat:
             self._connect_status.setText(
-                f"âś… Connected â€” {len(models)} model(s). Checking {chat}â€¦")
+                f"Ä‚ËÄąâ€şĂ˘â‚¬Â¦ Connected Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ {len(models)} model(s). Checking {chat}Ä‚ËĂ˘â€šÂ¬Ă‚Â¦")
             self._start_capability_probe()
         else:
             self._connect_btn.setEnabled(True)
-            self._connect_status.setText(f"âś… Connected â€” {len(models)} model(s) found.")
+            self._connect_status.setText(f"Ä‚ËÄąâ€şĂ˘â‚¬Â¦ Connected Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ {len(models)} model(s) found.")
         self.completeChanged.emit()
 
     def _start_capability_probe(self):
@@ -1368,12 +1370,12 @@ class OpenAICompatiblePage(QWizardPage):
     def _capability_summary(caps) -> str:
         """Honest one-line verdict on what the chosen server+model can do."""
         if not getattr(caps, "reachable", False):
-            return ("âš ď¸Ź Couldn't get a response with that model. Check the URL, "
+            return ("Ä‚ËÄąË‡Ă‚Â Ă„ĹąĂ‚Â¸ÄąÄ… Couldn't get a response with that model. Check the URL, "
                     "key, and that the model id is loaded on the server.")
-        mark = lambda ok: "âś…" if ok else "âš ď¸Ź"
+        mark = lambda ok: "Ä‚ËÄąâ€şĂ˘â‚¬Â¦" if ok else "Ä‚ËÄąË‡Ă‚Â Ă„ĹąĂ‚Â¸ÄąÄ…"
         parts = [f"{mark(caps.chat)} Chat", f"{mark(caps.tools)} Tool calling"]
-        parts.append("âś… Embeddings" if caps.embeddings
-                     else "âš ď¸Ź No embeddings (memory uses keyword search)")
+        parts.append("Ä‚ËÄąâ€şĂ˘â‚¬Â¦ Embeddings" if caps.embeddings
+                     else "Ä‚ËÄąË‡Ă‚Â Ă„ĹąĂ‚Â¸ÄąÄ… No embeddings (memory uses keyword search)")
         return "   ".join(parts)
 
     def _populate_models(self, models: list):
@@ -1384,7 +1386,7 @@ class OpenAICompatiblePage(QWizardPage):
         the common case is just Connect then Next."""
         chat_models, embed_models = self._classify_models(models)
         # The chat box lists chat models (or the full list if the heuristic
-        # found none), but only auto-selects a real chat model â€” never an
+        # found none), but only auto-selects a real chat model Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ never an
         # embedding model, which would be a wrong default.
         self._fill_combo(self._chat_model_combo, chat_models or models, blank=False,
                          default=(chat_models[0] if chat_models else ""))
@@ -1398,7 +1400,7 @@ class OpenAICompatiblePage(QWizardPage):
         combo.blockSignals(True)
         combo.clear()
         if blank:
-            combo.addItem("")  # "(none)" â€” embeddings optional
+            combo.addItem("")  # "(none)" Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ embeddings optional
         for it in items:
             combo.addItem(it)
         combo.setCurrentText(current or default)
@@ -1438,7 +1440,7 @@ class OpenAICompatiblePage(QWizardPage):
             QTimer.singleShot(0, wizard.adjustSize)
 
     def _start_discovery(self):
-        self._connect_status.setText("đź”Ť Looking for local serversâ€¦")
+        self._connect_status.setText("Ă„â€ÄąĹźĂ˘â‚¬ĹĄÄąÂ¤ Looking for local serversÄ‚ËĂ˘â€šÂ¬Ă‚Â¦")
         worker = _DiscoveryWorker(list(self._KNOWN_SERVERS))
         worker.done.connect(self._on_discovered)
         self._discovery_worker = worker  # keep a reference so it isn't GC'd
@@ -1454,11 +1456,11 @@ class OpenAICompatiblePage(QWizardPage):
             self._base_url_input.setText(url)
         if len(found) == 1:
             self._connect_status.setText(
-                f"đź”Ť Found {label} at {url} â€” click Connect to load its models.")
+                f"Ă„â€ÄąĹźĂ˘â‚¬ĹĄÄąÂ¤ Found {label} at {url} Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ click Connect to load its models.")
         else:
             names = ", ".join(l for l, _ in found)
             self._connect_status.setText(
-                f"đź”Ť Found {len(found)} servers ({names}). Pick one above, then Connect.")
+                f"Ă„â€ÄąĹźĂ˘â‚¬ĹĄÄąÂ¤ Found {len(found)} servers ({names}). Pick one above, then Connect.")
 
     @staticmethod
     def _is_ready(base_url: str, chat_model: str) -> bool:
@@ -1545,7 +1547,7 @@ class OllamaInstallPage(QWizardPage):
         layout.setContentsMargins(40, 40, 40, 40)
 
         # Header
-        title = QLabel("đź’» Install Ollama")
+        title = QLabel("Ă„â€ÄąĹźĂ˘â‚¬â„˘Ă‚Â» Install Ollama")
         title.setObjectName("title")
         layout.addWidget(title)
 
@@ -1563,7 +1565,7 @@ class OllamaInstallPage(QWizardPage):
         card_layout.setContentsMargins(24, 24, 24, 24)
         card_layout.setSpacing(12)
 
-        instructions_title = QLabel("đź“Ą Installation Instructions")
+        instructions_title = QLabel("Ă„â€ÄąĹźĂ˘â‚¬Ĺ›Ă„â€ž Installation Instructions")
         instructions_title.setStyleSheet("font-size: 16px; font-weight: bold; color: #fbbf24;")
         card_layout.addWidget(instructions_title)
         card_layout.addSpacing(8)
@@ -1597,11 +1599,11 @@ class OllamaInstallPage(QWizardPage):
         btn_layout = QHBoxLayout()
         btn_layout.setSpacing(12)
 
-        self.download_btn = QPushButton("đźŚ Open Download Page")
+        self.download_btn = QPushButton("Ă„â€ÄąĹźÄąĹˇĂ‚Â Open Download Page")
         self.download_btn.clicked.connect(self._open_download_page)
         btn_layout.addWidget(self.download_btn)
 
-        self.verify_btn = QPushButton("âś… Verify Installation")
+        self.verify_btn = QPushButton("Ä‚ËÄąâ€şĂ˘â‚¬Â¦ Verify Installation")
         self.verify_btn.setObjectName("success")
         self.verify_btn.clicked.connect(self._verify_installation)
         btn_layout.addWidget(self.verify_btn)
@@ -1622,19 +1624,19 @@ class OllamaInstallPage(QWizardPage):
     def _open_download_page(self):
         """Open Ollama download page in browser."""
         webbrowser.open("https://ollama.ai/download")
-        self.status_label.setText("đź“ť Download page opened. Please install Ollama and then click 'Verify Installation'.")
+        self.status_label.setText("Ă„â€ÄąĹźĂ˘â‚¬Ĺ›ÄąÄ„ Download page opened. Please install Ollama and then click 'Verify Installation'.")
         self.status_label.setStyleSheet("color: #a1a1aa;")
 
     def _verify_installation(self):
         """Verify Ollama installation."""
         self.verify_btn.setEnabled(False)
-        self.verify_btn.setText("âŹł Checking...")
+        self.verify_btn.setText("Ä‚ËÄąÄ…Äąâ€š Checking...")
 
         is_installed, path = check_ollama_cli()
 
         if is_installed:
             self._is_installed = True
-            self.status_label.setText(f"âś… Ollama is installed at: {path}")
+            self.status_label.setText(f"Ä‚ËÄąâ€şĂ˘â‚¬Â¦ Ollama is installed at: {path}")
             self.status_label.setStyleSheet("color: #4ade80;")
 
             # Update wizard status
@@ -1644,11 +1646,11 @@ class OllamaInstallPage(QWizardPage):
                 wizard.ollama_status.cli_path = path
         else:
             self._is_installed = False
-            self.status_label.setText("âťŚ Ollama not found. Please install it and try again.")
+            self.status_label.setText("Ä‚ËÄąÄ„ÄąĹˇ Ollama not found. Please install it and try again.")
             self.status_label.setStyleSheet("color: #f87171;")
 
         self.verify_btn.setEnabled(True)
-        self.verify_btn.setText("âś… Verify Installation")
+        self.verify_btn.setText("Ä‚ËÄąâ€şĂ˘â‚¬Â¦ Verify Installation")
         self.completeChanged.emit()
 
     def isComplete(self) -> bool:
@@ -1661,7 +1663,7 @@ class OllamaInstallPage(QWizardPage):
         self._is_installed = is_installed
 
         if is_installed:
-            self.status_label.setText(f"âś… Ollama is already installed at: {path}")
+            self.status_label.setText(f"Ä‚ËÄąâ€şĂ˘â‚¬Â¦ Ollama is already installed at: {path}")
             self.status_label.setStyleSheet("color: #4ade80;")
         else:
             self.status_label.setText("")
@@ -1688,7 +1690,7 @@ class OllamaServerPage(QWizardPage):
         layout.setContentsMargins(40, 40, 40, 40)
 
         # Header
-        title = QLabel("đźŚ Start Ollama Server")
+        title = QLabel("Ă„â€ÄąĹźÄąĹˇĂ‚Â Start Ollama Server")
         title.setObjectName("title")
         layout.addWidget(title)
 
@@ -1706,7 +1708,7 @@ class OllamaServerPage(QWizardPage):
         card_layout.setContentsMargins(24, 24, 24, 24)
         card_layout.setSpacing(12)
 
-        instructions_title = QLabel("đźš€ Starting the Server")
+        instructions_title = QLabel("Ă„â€ÄąĹźÄąË‡Ă˘â€šÂ¬ Starting the Server")
         instructions_title.setStyleSheet("font-size: 16px; font-weight: bold; color: #fbbf24;")
         card_layout.addWidget(instructions_title)
         card_layout.addSpacing(8)
@@ -1715,16 +1717,16 @@ class OllamaServerPage(QWizardPage):
             instructions = QLabel(
                 "The Ollama server should start automatically when you use it.\n\n"
                 "If it's not running, you can:\n"
-                "â€˘ Open the Ollama app from your Applications folder\n"
-                "â€˘ Or run 'ollama serve' in a terminal\n"
-                "â€˘ Or click the button below to start it automatically"
+                "Ä‚ËĂ˘â€šÂ¬Ă‹Â Open the Ollama app from your Applications folder\n"
+                "Ä‚ËĂ˘â€šÂ¬Ă‹Â Or run 'ollama serve' in a terminal\n"
+                "Ä‚ËĂ˘â€šÂ¬Ă‹Â Or click the button below to start it automatically"
             )
         else:
             instructions = QLabel(
                 "The Ollama server should start automatically when you use it.\n\n"
                 "If it's not running, you can:\n"
-                "â€˘ Run 'ollama serve' in a terminal\n"
-                "â€˘ Or click the button below to start it automatically"
+                "Ä‚ËĂ˘â€šÂ¬Ă‹Â Run 'ollama serve' in a terminal\n"
+                "Ä‚ËĂ˘â€šÂ¬Ă‹Â Or click the button below to start it automatically"
             )
 
         instructions.setWordWrap(True)
@@ -1737,11 +1739,11 @@ class OllamaServerPage(QWizardPage):
         btn_layout = QHBoxLayout()
         btn_layout.setSpacing(12)
 
-        self.start_btn = QPushButton("đźš€ Start Server")
+        self.start_btn = QPushButton("Ă„â€ÄąĹźÄąË‡Ă˘â€šÂ¬ Start Server")
         self.start_btn.clicked.connect(self._start_server)
         btn_layout.addWidget(self.start_btn)
 
-        self.verify_btn = QPushButton("âś… Verify Server")
+        self.verify_btn = QPushButton("Ä‚ËÄąâ€şĂ˘â‚¬Â¦ Verify Server")
         self.verify_btn.setObjectName("success")
         self.verify_btn.clicked.connect(self._verify_server)
         btn_layout.addWidget(self.verify_btn)
@@ -1762,7 +1764,7 @@ class OllamaServerPage(QWizardPage):
     def _start_server(self):
         """Start the Ollama server."""
         self.start_btn.setEnabled(False)
-        self.start_btn.setText("âŹł Starting...")
+        self.start_btn.setText("Ä‚ËÄąÄ…Äąâ€š Starting...")
         self.status_label.setText("Starting Ollama server...")
         self.status_label.setStyleSheet("color: #a1a1aa;")
 
@@ -1813,22 +1815,22 @@ class OllamaServerPage(QWizardPage):
             QTimer.singleShot(3000, self._verify_server)
 
         except Exception as e:
-            self.status_label.setText(f"âťŚ Failed to start server: {str(e)}")
+            self.status_label.setText(f"Ä‚ËÄąÄ„ÄąĹˇ Failed to start server: {str(e)}")
             self.status_label.setStyleSheet("color: #f87171;")
             self.start_btn.setEnabled(True)
-            self.start_btn.setText("đźš€ Start Server")
+            self.start_btn.setText("Ă„â€ÄąĹźÄąË‡Ă˘â€šÂ¬ Start Server")
 
     def _verify_server(self):
         """Verify the server is running."""
         self.verify_btn.setEnabled(False)
-        self.verify_btn.setText("âŹł Checking...")
+        self.verify_btn.setText("Ä‚ËÄąÄ…Äąâ€š Checking...")
         self.start_btn.setEnabled(False)
 
         is_running, version = check_ollama_server()
 
         if is_running:
             self._is_running = True
-            self.status_label.setText(f"âś… Ollama server is running (version {version})")
+            self.status_label.setText(f"Ä‚ËÄąâ€şĂ˘â‚¬Â¦ Ollama server is running (version {version})")
             self.status_label.setStyleSheet("color: #4ade80;")
 
             # Update wizard status
@@ -1838,13 +1840,13 @@ class OllamaServerPage(QWizardPage):
                 wizard.ollama_status.server_version = version
         else:
             self._is_running = False
-            self.status_label.setText("âťŚ Server not responding. Please try starting it again.")
+            self.status_label.setText("Ä‚ËÄąÄ„ÄąĹˇ Server not responding. Please try starting it again.")
             self.status_label.setStyleSheet("color: #f87171;")
 
         self.verify_btn.setEnabled(True)
-        self.verify_btn.setText("âś… Verify Server")
+        self.verify_btn.setText("Ä‚ËÄąâ€şĂ˘â‚¬Â¦ Verify Server")
         self.start_btn.setEnabled(True)
-        self.start_btn.setText("đźš€ Start Server")
+        self.start_btn.setText("Ă„â€ÄąĹźÄąË‡Ă˘â€šÂ¬ Start Server")
         self.completeChanged.emit()
 
     def isComplete(self) -> bool:
@@ -1857,7 +1859,7 @@ class OllamaServerPage(QWizardPage):
         self._is_running = is_running
 
         if is_running:
-            self.status_label.setText(f"âś… Ollama server is already running (version {version})")
+            self.status_label.setText(f"Ä‚ËÄąâ€şĂ˘â‚¬Â¦ Ollama server is already running (version {version})")
             self.status_label.setStyleSheet("color: #4ade80;")
         else:
             self.status_label.setText("")
@@ -1873,7 +1875,7 @@ class OllamaServerPage(QWizardPage):
 
 
 class ModelsPage(QWizardPage):
-    """Page for installing required AI models â€” dual-category (fast + chat)."""
+    """Page for installing required AI models Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ dual-category (fast + chat)."""
 
     MODEL_OPTIONS = SUPPORTED_CHAT_MODELS
     _ALL_MODELS = MODEL_OPTIONS
@@ -1890,7 +1892,7 @@ class ModelsPage(QWizardPage):
 
         Reads the saved whisper model from config (set by WhisperSetupPage
         which now runs before this page).  Falls back to ``_WHISPER_VRAM_MB``
-        (2048â€ŻMB = whisper small) when unavailable.
+        (2048Ä‚ËĂ˘â€šÂ¬ÄąÂ»MB = whisper small) when unavailable.
         """
         try:
             cfg = load_settings()
@@ -1917,7 +1919,7 @@ class ModelsPage(QWizardPage):
         layout.setSpacing(16)
         layout.setContentsMargins(40, 40, 40, 40)
 
-        title = QLabel("đź§  Install AI Models")
+        title = QLabel("Ă„â€ÄąĹźĂ‚Â§Ă‚Â  Install AI Models")
         title.setObjectName("title")
         layout.addWidget(title)
 
@@ -1931,7 +1933,7 @@ class ModelsPage(QWizardPage):
         layout.addWidget(subtitle)
         layout.addSpacing(8)
 
-        # Link toggle (off by default â€” separate models recommended)
+        # Link toggle (off by default Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ separate models recommended)
         self._link_cb = QCheckBox("\u2699\ufe0f Use same model for both roles")
         self._link_cb.setChecked(False)
         self._link_cb.setStyleSheet("font-size: 14px; color: #e4e4e7; padding: 4px 0;")
@@ -1956,7 +1958,7 @@ class ModelsPage(QWizardPage):
         card_layout.setSpacing(10)
 
         # Chat model dropdown
-        chat_label = QLabel("đźŽŻ Chat Model (conversations)")
+        chat_label = QLabel("Ă„â€ÄąĹźÄąËťÄąÂ» Chat Model (conversations)")
         chat_label.setStyleSheet("font-size: 15px; font-weight: bold; color: #fbbf24;")
         card_layout.addWidget(chat_label)
 
@@ -1965,7 +1967,7 @@ class ModelsPage(QWizardPage):
         self._chat_combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         for mid in self._ALL_MODELS:
             info = self._ALL_MODELS[mid]
-            self._chat_combo.addItem(f"{info['name']}  â€˘  VRAM: {info['vram']}", mid)
+            self._chat_combo.addItem(f"{info['name']}  Ä‚ËĂ˘â€šÂ¬Ă‹Â  VRAM: {info['vram']}", mid)
         self._chat_combo.setCurrentIndex(self._chat_combo.findData(self._chat_model))
         self._chat_combo.currentIndexChanged.connect(self._on_chat_combo_changed)
         card_layout.addWidget(self._chat_combo)
@@ -1973,7 +1975,7 @@ class ModelsPage(QWizardPage):
         card_layout.addSpacing(8)
 
         # Fast model dropdown
-        fast_label = QLabel("âšˇ Fast Model (voice intent, tool routing)")
+        fast_label = QLabel("Ä‚ËÄąË‡Ă‹â€ˇ Fast Model (voice intent, tool routing)")
         fast_label.setStyleSheet("font-size: 15px; font-weight: bold; color: #a78bfa;")
         card_layout.addWidget(fast_label)
 
@@ -1982,7 +1984,7 @@ class ModelsPage(QWizardPage):
         self._fast_combo.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         for mid in self._FAST_MODEL_IDS:
             info = self._ALL_MODELS[mid]
-            self._fast_combo.addItem(f"{info['name']}  â€˘  VRAM: {info['vram']}", mid)
+            self._fast_combo.addItem(f"{info['name']}  Ä‚ËĂ˘â€šÂ¬Ă‹Â  VRAM: {info['vram']}", mid)
         self._fast_combo.setCurrentIndex(self._fast_combo.findData(self._fast_model))
         self._fast_combo.currentIndexChanged.connect(self._on_fast_combo_changed)
         card_layout.addWidget(self._fast_combo)
@@ -2012,7 +2014,7 @@ class ModelsPage(QWizardPage):
         cl = QVBoxLayout(card)
         cl.setContentsMargins(24, 24, 24, 24)
         cl.setSpacing(12)
-        mt = QLabel("đź“¦ Required Models")
+        mt = QLabel("Ă„â€ÄąĹźĂ˘â‚¬Ĺ›Ă‚Â¦ Required Models")
         mt.setStyleSheet("font-size: 16px; font-weight: bold; color: #fbbf24;")
         cl.addWidget(mt)
         cl.addSpacing(8)
@@ -2035,10 +2037,10 @@ class ModelsPage(QWizardPage):
         # Buttons
         bl = QHBoxLayout()
         bl.setSpacing(12)
-        self.install_btn = QPushButton("đź“Ą Install Missing Models")
+        self.install_btn = QPushButton("Ă„â€ÄąĹźĂ˘â‚¬Ĺ›Ă„â€ž Install Missing Models")
         self.install_btn.clicked.connect(self._install_models)
         bl.addWidget(self.install_btn)
-        self.skip_btn = QPushButton("âŹ­ď¸Ź Skip")
+        self.skip_btn = QPushButton("Ä‚ËÄąÄ…Ă‚Â­Ă„ĹąĂ‚Â¸ÄąÄ… Skip")
         self.skip_btn.setObjectName("secondary")
         self.skip_btn.clicked.connect(self._skip_models)
         bl.addWidget(self.skip_btn)
@@ -2078,15 +2080,15 @@ class ModelsPage(QWizardPage):
         self._update_models_display()
 
     def _build_linked_view(self):
-        """No-op â€” kept for backward compat. Selection uses dropdowns."""
+        """No-op Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ kept for backward compat. Selection uses dropdowns."""
         pass
 
     def _build_unlinked_view(self):
-        """No-op â€” kept for backward compat. Selection uses dropdowns."""
+        """No-op Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ kept for backward compat. Selection uses dropdowns."""
         pass
 
     def _make_button(self, info, compact=False):
-        """No-op â€” kept for backward compat. Selection uses dropdowns."""
+        """No-op Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ kept for backward compat. Selection uses dropdowns."""
         pass
 
     def _on_link_toggled(self, linked):
@@ -2098,7 +2100,7 @@ class ModelsPage(QWizardPage):
         self._update_models_display()
 
     def _on_linked_selected(self, mid):
-        """No-op â€” selection uses dropdowns."""
+        """No-op Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ selection uses dropdowns."""
         pass
 
     def _on_fast_combo_changed(self, idx):
@@ -2163,7 +2165,7 @@ class ModelsPage(QWizardPage):
         cv = required_vram_mb(self._chat_model) or 0
         if self._linked or self._fast_model == self._chat_model:
             total = cv + overhead
-            detail = f"(chat {cv // 1024} GB + embed+whisper {overhead // 1024} GB â€” shared VRAM)"
+            detail = f"(chat {cv // 1024} GB + embed+whisper {overhead // 1024} GB Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ shared VRAM)"
         else:
             total = fv + cv + overhead
             detail = (f"(fast {fv // 1024} GB + chat {cv // 1024} GB "
@@ -2271,7 +2273,7 @@ class ModelsPage(QWizardPage):
                 if rc <= cv and fits_vram:
                     self._fast_model = c
                     break
-        # Default to unlinked â€” separate fast model is the recommended layout
+        # Default to unlinked Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ separate fast model is the recommended layout
         # even when both happen to be the same model ID.
         self._linked = False
         self._link_cb.setChecked(False)
@@ -2441,12 +2443,12 @@ class WhisperSetupPage(QWizardPage):
 
         # Header - different text based on platform
         if self._is_apple_silicon:
-            title = QLabel("đźŽ¤ MLX Whisper Setup")
+            title = QLabel("Ă„â€ÄąĹźÄąËťĂ‚Â¤ MLX Whisper Setup")
             subtitle_text = (
                 "GPU-accelerated speech recognition. Choose language and model size."
             )
         else:
-            title = QLabel("đźŽ¤ Whisper Model Selection")
+            title = QLabel("Ă„â€ÄąĹźÄąËťĂ‚Â¤ Whisper Model Selection")
             subtitle_text = "Choose language mode and model size for speech recognition."
 
         title.setObjectName("title")
@@ -2464,7 +2466,7 @@ class WhisperSetupPage(QWizardPage):
         lang_layout.setContentsMargins(16, 12, 16, 12)
         lang_layout.setSpacing(8)
 
-        lang_title = QLabel("đźŚŤ Language Support")
+        lang_title = QLabel("Ă„â€ÄąĹźÄąĹˇÄąÂ¤ Language Support")
         lang_title.setStyleSheet("font-size: 14px; font-weight: bold; color: #fbbf24; background: transparent;")
         lang_layout.addWidget(lang_title)
 
@@ -2472,13 +2474,13 @@ class WhisperSetupPage(QWizardPage):
         lang_btn_layout = QHBoxLayout()
         lang_btn_layout.setSpacing(8)
 
-        self._english_btn = QPushButton("đź‡¬đź‡§ English Only")
+        self._english_btn = QPushButton("Ă„â€ÄąĹźĂ˘â‚¬Ë‡Ă‚Â¬Ă„â€ÄąĹźĂ˘â‚¬Ë‡Ă‚Â§ English Only")
         self._english_btn.setCheckable(True)
         self._english_btn.setChecked(True)
         self._english_btn.setFixedHeight(36)
         self._english_btn.clicked.connect(lambda: self._on_language_changed(True))
 
-        self._multilingual_btn = QPushButton("đźŚ Multilingual (99 langs)")
+        self._multilingual_btn = QPushButton("Ă„â€ÄąĹźÄąĹˇĂ‚Â Multilingual (99 langs)")
         self._multilingual_btn.setCheckable(True)
         self._multilingual_btn.setFixedHeight(36)
         self._multilingual_btn.clicked.connect(lambda: self._on_language_changed(False))
@@ -2525,7 +2527,7 @@ class WhisperSetupPage(QWizardPage):
         selection_layout.setContentsMargins(16, 12, 16, 12)
         selection_layout.setSpacing(4)
 
-        selection_title = QLabel("đźŽŻ Choose Model Size")
+        selection_title = QLabel("Ă„â€ÄąĹźÄąËťÄąÂ» Choose Model Size")
         selection_title.setStyleSheet("font-size: 14px; font-weight: bold; color: #fbbf24; background: transparent;")
         selection_layout.addWidget(selection_title)
 
@@ -2620,12 +2622,12 @@ class WhisperSetupPage(QWizardPage):
         mlx_layout.setContentsMargins(16, 12, 16, 12)
         mlx_layout.setSpacing(6)
 
-        status_title = QLabel("đź“‹ Requirements")
+        status_title = QLabel("Ă„â€ÄąĹźĂ˘â‚¬Ĺ›Ă˘â‚¬Ä… Requirements")
         status_title.setStyleSheet("font-size: 14px; font-weight: bold; color: #fbbf24; background: transparent;")
         mlx_layout.addWidget(status_title)
 
-        self.ffmpeg_status = self._create_status_row("đźŽ¬ FFmpeg", "Checking...")
-        self.mlx_status = self._create_status_row("đź§  MLX Whisper", "Checking...")
+        self.ffmpeg_status = self._create_status_row("Ă„â€ÄąĹźÄąËťĂ‚Â¬ FFmpeg", "Checking...")
+        self.mlx_status = self._create_status_row("Ă„â€ÄąĹźĂ‚Â§Ă‚Â  MLX Whisper", "Checking...")
 
         mlx_layout.addWidget(self.ffmpeg_status)
         mlx_layout.addWidget(self.mlx_status)
@@ -2648,12 +2650,12 @@ class WhisperSetupPage(QWizardPage):
         btn_layout = QHBoxLayout()
         btn_layout.setSpacing(8)
 
-        self.install_ffmpeg_btn = QPushButton("đźŽ¬ FFmpeg")
+        self.install_ffmpeg_btn = QPushButton("Ă„â€ÄąĹźÄąËťĂ‚Â¬ FFmpeg")
         self.install_ffmpeg_btn.setFixedHeight(32)
         self.install_ffmpeg_btn.clicked.connect(self._install_ffmpeg)
         btn_layout.addWidget(self.install_ffmpeg_btn)
 
-        self.install_mlx_btn = QPushButton("đź§  MLX Whisper")
+        self.install_mlx_btn = QPushButton("Ă„â€ÄąĹźĂ‚Â§Ă‚Â  MLX Whisper")
         self.install_mlx_btn.setFixedHeight(32)
         self.install_mlx_btn.clicked.connect(self._install_mlx_whisper)
         btn_layout.addWidget(self.install_mlx_btn)
@@ -2728,12 +2730,12 @@ class WhisperSetupPage(QWizardPage):
 
         # Clear existing labels.  The labels are already properly parented
         # to their container widget, and takeAt() removes the layout's
-        # reference â€” scheduling deleteLater() is enough.  Do NOT call
+        # reference Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ scheduling deleteLater() is enough.  Do NOT call
         # setParent(None) here: on macOS that promotes each QLabel to a
         # top-level widget mid-transition, which triggers a native
         # NSWindow creation and can SIGABRT inside QWizard.exec().  On
         # Windows the same reparent creates a native HWND and fast-fails
-        # (0xc0000409) inside Qt6Core.dll â€” see dictation_history.py
+        # (0xc0000409) inside Qt6Core.dll Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ see dictation_history.py
         # where the same mistake crashed the history window.
         while self._labels_layout.count():
             item = self._labels_layout.takeAt(0)
@@ -2823,7 +2825,7 @@ class WhisperSetupPage(QWizardPage):
         for model_id, name, file_size, ram, desc in options:
             if model_id == self._selected_whisper_model:
                 lang_note = "English only" if self._is_english_only else "99 languages"
-                self._model_info_label.setText(f"Selected: {name} ({file_size}, {ram}) â€” {desc} [{lang_note}]")
+                self._model_info_label.setText(f"Selected: {name} ({file_size}, {ram}) Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ {desc} [{lang_note}]")
                 break
 
     def _create_status_row(self, label_text: str, status_text: str) -> QWidget:
@@ -2907,46 +2909,46 @@ class WhisperSetupPage(QWizardPage):
 
         # Update FFmpeg status
         if status.is_ffmpeg_installed:
-            self._update_status_row(self.ffmpeg_status, f"âś… Installed ({status.ffmpeg_path})", True)
+            self._update_status_row(self.ffmpeg_status, f"Ä‚ËÄąâ€şĂ˘â‚¬Â¦ Installed ({status.ffmpeg_path})", True)
             self.install_ffmpeg_btn.setEnabled(False)
-            self.install_ffmpeg_btn.setText("âś… FFmpeg Installed")
+            self.install_ffmpeg_btn.setText("Ä‚ËÄąâ€şĂ˘â‚¬Â¦ FFmpeg Installed")
         else:
-            self._update_status_row(self.ffmpeg_status, "âťŚ Not installed", False)
+            self._update_status_row(self.ffmpeg_status, "Ä‚ËÄąÄ„ÄąĹˇ Not installed", False)
             self.install_ffmpeg_btn.setEnabled(True)
-            self.install_ffmpeg_btn.setText("đźŽ¬ Install FFmpeg")
+            self.install_ffmpeg_btn.setText("Ă„â€ÄąĹźÄąËťĂ‚Â¬ Install FFmpeg")
 
         # Update MLX Whisper status
         if status.is_mlx_whisper_installed:
-            self._update_status_row(self.mlx_status, "âś… Installed", True)
+            self._update_status_row(self.mlx_status, "Ä‚ËÄąâ€şĂ˘â‚¬Â¦ Installed", True)
             self.install_mlx_btn.setEnabled(False)
-            self.install_mlx_btn.setText("âś… MLX Whisper Installed")
+            self.install_mlx_btn.setText("Ä‚ËÄąâ€şĂ˘â‚¬Â¦ MLX Whisper Installed")
             self.install_mlx_btn.setVisible(True)
         elif self._is_bundled:
             # In bundled mode, can't pip install - hide the button
-            self._update_status_row(self.mlx_status, "âšˇ Using faster-whisper", True)
+            self._update_status_row(self.mlx_status, "Ä‚ËÄąË‡Ă‹â€ˇ Using faster-whisper", True)
             self.install_mlx_btn.setVisible(False)
         else:
-            self._update_status_row(self.mlx_status, "âťŚ Not installed", False)
+            self._update_status_row(self.mlx_status, "Ä‚ËÄąÄ„ÄąĹˇ Not installed", False)
             self.install_mlx_btn.setEnabled(True)
-            self.install_mlx_btn.setText("đź§  Install MLX Whisper")
+            self.install_mlx_btn.setText("Ă„â€ÄąĹźĂ‚Â§Ă‚Â  Install MLX Whisper")
             self.install_mlx_btn.setVisible(True)
 
         # Update status message based on setup state
         if status.is_fully_setup:
-            self.status_label.setText("âś… MLX Whisper is ready! GPU-accelerated speech recognition enabled.")
+            self.status_label.setText("Ä‚ËÄąâ€şĂ˘â‚¬Â¦ MLX Whisper is ready! GPU-accelerated speech recognition enabled.")
             self.status_label.setStyleSheet("color: #4ade80;")
         elif self._is_bundled and not status.is_mlx_whisper_installed:
             # In bundled mode without MLX, faster-whisper is used automatically
-            self.status_label.setText("âś… Speech recognition ready using faster-whisper.")
+            self.status_label.setText("Ä‚ËÄąâ€şĂ˘â‚¬Â¦ Speech recognition ready using faster-whisper.")
             self.status_label.setStyleSheet("color: #4ade80;")
         else:
             if not status.is_ffmpeg_installed:
                 self.status_label.setText(
-                    "đź’ˇ Install FFmpeg for audio processing, or continue to save your model selection."
+                    "Ă„â€ÄąĹźĂ˘â‚¬â„˘Ă‹â€ˇ Install FFmpeg for audio processing, or continue to save your model selection."
                 )
             elif not status.is_mlx_whisper_installed:
                 self.status_label.setText(
-                    "đź’ˇ Install MLX Whisper for GPU acceleration, or continue to save your model selection."
+                    "Ă„â€ÄąĹźĂ˘â‚¬â„˘Ă‹â€ˇ Install MLX Whisper for GPU acceleration, or continue to save your model selection."
                 )
             self.status_label.setStyleSheet("color: #a1a1aa;")
 
@@ -2958,14 +2960,14 @@ class WhisperSetupPage(QWizardPage):
         brew_path = shutil.which("brew")
         if not brew_path:
             self.status_label.setText(
-                "âťŚ Homebrew not found. Please install Homebrew first:\n"
+                "Ä‚ËÄąÄ„ÄąĹˇ Homebrew not found. Please install Homebrew first:\n"
                 "/bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
             )
             self.status_label.setStyleSheet("color: #f87171;")
             return
 
         self.install_ffmpeg_btn.setEnabled(False)
-        self.install_ffmpeg_btn.setText("âŹł Installing...")
+        self.install_ffmpeg_btn.setText("Ä‚ËÄąÄ…Äąâ€š Installing...")
         self.progress.setVisible(True)
         self.progress.setRange(0, 0)
         self.log_output.setVisible(True)
@@ -2979,7 +2981,7 @@ class WhisperSetupPage(QWizardPage):
     def _install_mlx_whisper(self):
         """Install MLX Whisper via pip."""
         self.install_mlx_btn.setEnabled(False)
-        self.install_mlx_btn.setText("âŹł Installing...")
+        self.install_mlx_btn.setText("Ä‚ËÄąÄ…Äąâ€š Installing...")
         self.progress.setVisible(True)
         self.progress.setRange(0, 0)
         self.log_output.setVisible(True)
@@ -3002,24 +3004,24 @@ class WhisperSetupPage(QWizardPage):
         """Handle FFmpeg installation completion."""
         self.progress.setVisible(False)
         self.install_ffmpeg_btn.setEnabled(True)
-        self.install_ffmpeg_btn.setText("đźŽ¬ Install FFmpeg")
+        self.install_ffmpeg_btn.setText("Ă„â€ÄąĹźÄąËťĂ‚Â¬ Install FFmpeg")
 
         if success:
             self._refresh_mlx_status()
         else:
-            self.status_label.setText(f"âťŚ Failed to install FFmpeg: {message}")
+            self.status_label.setText(f"Ä‚ËÄąÄ„ÄąĹˇ Failed to install FFmpeg: {message}")
             self.status_label.setStyleSheet("color: #f87171;")
 
     def _on_mlx_installed(self, success: bool, message: str):
         """Handle MLX Whisper installation completion."""
         self.progress.setVisible(False)
         self.install_mlx_btn.setEnabled(True)
-        self.install_mlx_btn.setText("đź§  Install MLX Whisper")
+        self.install_mlx_btn.setText("Ă„â€ÄąĹźĂ‚Â§Ă‚Â  Install MLX Whisper")
 
         if success:
             self._refresh_mlx_status()
         else:
-            self.status_label.setText(f"âťŚ Failed to install MLX Whisper: {message}")
+            self.status_label.setText(f"Ä‚ËÄąÄ„ÄąĹˇ Failed to install MLX Whisper: {message}")
             self.status_label.setStyleSheet("color: #f87171;")
 
     def isComplete(self) -> bool:
@@ -3068,7 +3070,7 @@ class LocationPage(QWizardPage):
         layout.setContentsMargins(40, 40, 40, 40)
 
         # Header
-        title = QLabel("đź“Ť Location Configuration")
+        title = QLabel("Ă„â€ÄąĹźĂ˘â‚¬Ĺ›ÄąÂ¤ Location Configuration")
         title.setObjectName("title")
         layout.addWidget(title)
 
@@ -3086,7 +3088,7 @@ class LocationPage(QWizardPage):
         card_layout.setContentsMargins(24, 24, 24, 24)
         card_layout.setSpacing(12)
 
-        status_title = QLabel("đź”Ť Detection Status")
+        status_title = QLabel("Ă„â€ÄąĹźĂ˘â‚¬ĹĄÄąÂ¤ Detection Status")
         status_title.setStyleSheet("font-size: 16px; font-weight: bold; color: #fbbf24;")
         card_layout.addWidget(status_title)
         card_layout.addSpacing(8)
@@ -3105,7 +3107,7 @@ class LocationPage(QWizardPage):
         config_layout.setContentsMargins(24, 24, 24, 24)
         config_layout.setSpacing(12)
 
-        config_title = QLabel("âš™ď¸Ź Manual Configuration (Optional)")
+        config_title = QLabel("Ä‚ËÄąË‡Ă˘â€žËĂ„ĹąĂ‚Â¸ÄąÄ… Manual Configuration (Optional)")
         config_title.setStyleSheet("font-size: 16px; font-weight: bold; color: #fbbf24;")
         config_layout.addWidget(config_title)
         config_layout.addSpacing(8)
@@ -3126,7 +3128,7 @@ class LocationPage(QWizardPage):
         self.ip_input.setMinimumHeight(44)
         ip_layout.addWidget(self.ip_input, stretch=1)
 
-        self.test_btn = QPushButton("đź§Ş Test")
+        self.test_btn = QPushButton("Ă„â€ÄąĹźĂ‚Â§ÄąĹľ Test")
         self.test_btn.clicked.connect(self._test_ip)
         self.test_btn.setMinimumHeight(44)
         ip_layout.addWidget(self.test_btn)
@@ -3144,13 +3146,13 @@ class LocationPage(QWizardPage):
         btn_layout = QHBoxLayout()
         btn_layout.setSpacing(12)
 
-        self.open_ip_btn = QPushButton("đź”Ť Detect My IP")
+        self.open_ip_btn = QPushButton("Ă„â€ÄąĹźĂ˘â‚¬ĹĄÄąÂ¤ Detect My IP")
         self.open_ip_btn.setObjectName("secondary")
         self.open_ip_btn.setMinimumHeight(44)
         self.open_ip_btn.clicked.connect(self._open_ip_lookup)
         btn_layout.addWidget(self.open_ip_btn)
 
-        self.save_btn = QPushButton("đź’ľ Save IP to Config")
+        self.save_btn = QPushButton("Ă„â€ÄąĹźĂ˘â‚¬â„˘Ă„Äľ Save IP to Config")
         self.save_btn.setObjectName("success")
         self.save_btn.setMinimumHeight(44)
         self.save_btn.clicked.connect(self._save_ip_to_config)
@@ -3181,10 +3183,10 @@ class LocationPage(QWizardPage):
         status_parts = []
 
         if not GEOIP2_AVAILABLE:
-            status_parts.append("âťŚ GeoIP2 library not installed (pip install geoip2)")
+            status_parts.append("Ä‚ËÄąÄ„ÄąĹˇ GeoIP2 library not installed (pip install geoip2)")
         elif not is_location_available():
             db_path = _get_database_path()
-            status_parts.append("âťŚ GeoLite2 database not found")
+            status_parts.append("Ä‚ËÄąÄ„ÄąĹˇ GeoLite2 database not found")
             status_parts.append(f"   Expected location: {db_path}")
             status_parts.append("")
             status_parts.append("   To set up:")
@@ -3192,7 +3194,7 @@ class LocationPage(QWizardPage):
             status_parts.append("   2. Download GeoLite2-City (MMDB format)")
             status_parts.append(f"   3. Save as: {db_path}")
         else:
-            status_parts.append("âś… GeoLite2 database found")
+            status_parts.append("Ä‚ËÄąâ€şĂ˘â‚¬Â¦ GeoLite2 database found")
             try:
                 cfg = load_settings()
                 location_context = get_location_context(
@@ -3204,12 +3206,12 @@ class LocationPage(QWizardPage):
                 location_context = get_location_context(auto_detect=True, resolve_cgnat_public_ip=True)
 
             if location_context == "Location: Unknown":
-                status_parts.append("âťŚ Could not detect public IP address")
+                status_parts.append("Ä‚ËÄąÄ„ÄąĹˇ Could not detect public IP address")
                 status_parts.append("")
                 status_parts.append("   Your network likely uses NAT without UPnP support.")
                 status_parts.append("   Enter your public IP below to enable location features.")
             else:
-                status_parts.append(f"âś… {location_context}")
+                status_parts.append(f"Ä‚ËÄąâ€şĂ˘â‚¬Â¦ {location_context}")
                 status_parts.append("")
                 status_parts.append("   Location is working! You can skip this step.")
 
@@ -3221,10 +3223,10 @@ class LocationPage(QWizardPage):
         resolved = _resolve_public_ip_via_opendns()
         if resolved:
             self.ip_input.setText(resolved)
-            self.test_result_label.setText(f"âś… Detected public IP: {resolved}")
+            self.test_result_label.setText(f"Ä‚ËÄąâ€şĂ˘â‚¬Â¦ Detected public IP: {resolved}")
             self.test_result_label.setStyleSheet("color: #4ade80;")
         else:
-            self.test_result_label.setText("âš ď¸Ź Could not detect public IP via DNS")
+            self.test_result_label.setText("Ä‚ËÄąË‡Ă‚Â Ă„ĹąĂ‚Â¸ÄąÄ… Could not detect public IP via DNS")
             self.test_result_label.setStyleSheet("color: #fbbf24;")
 
     def _test_ip(self):
@@ -3232,7 +3234,7 @@ class LocationPage(QWizardPage):
         ip = self.ip_input.text().strip()
 
         if not ip:
-            self.test_result_label.setText("âťŚ Please enter an IP address")
+            self.test_result_label.setText("Ä‚ËÄąÄ„ÄąĹˇ Please enter an IP address")
             self.test_result_label.setStyleSheet("color: #f87171;")
             self.save_btn.setEnabled(False)
             self._validated_ip = None
@@ -3241,7 +3243,7 @@ class LocationPage(QWizardPage):
         import re
         ip_pattern = r'^(\d{1,3}\.){3}\d{1,3}$'
         if not re.match(ip_pattern, ip):
-            self.test_result_label.setText("âťŚ Invalid IP format. Use format: 203.0.113.45")
+            self.test_result_label.setText("Ä‚ËÄąÄ„ÄąĹˇ Invalid IP format. Use format: 203.0.113.45")
             self.test_result_label.setStyleSheet("color: #f87171;")
             self.save_btn.setEnabled(False)
             self._validated_ip = None
@@ -3250,28 +3252,28 @@ class LocationPage(QWizardPage):
         octets = ip.split('.')
         for octet in octets:
             if int(octet) > 255:
-                self.test_result_label.setText("âťŚ Invalid IP: octets must be 0-255")
+                self.test_result_label.setText("Ä‚ËÄąÄ„ÄąĹˇ Invalid IP: octets must be 0-255")
                 self.test_result_label.setStyleSheet("color: #f87171;")
                 self.save_btn.setEnabled(False)
                 self._validated_ip = None
                 return
 
         if _is_private_ip(ip):
-            self.test_result_label.setText("âš ď¸Ź This appears to be a private IP. Use your public IP instead.")
+            self.test_result_label.setText("Ä‚ËÄąË‡Ă‚Â Ă„ĹąĂ‚Â¸ÄąÄ… This appears to be a private IP. Use your public IP instead.")
             self.test_result_label.setStyleSheet("color: #fbbf24;")
             self.save_btn.setEnabled(False)
             self._validated_ip = None
             return
 
         if _is_cgnat_ip(ip):
-            self.test_result_label.setText("âš ď¸Ź This is a CGNAT IP (100.64.0.0/10). Use your true public IP instead.")
+            self.test_result_label.setText("Ä‚ËÄąË‡Ă‚Â Ă„ĹąĂ‚Â¸ÄąÄ… This is a CGNAT IP (100.64.0.0/10). Use your true public IP instead.")
             self.test_result_label.setStyleSheet("color: #fbbf24;")
             self.save_btn.setEnabled(False)
             self._validated_ip = None
             return
 
         if not is_location_available():
-            self.test_result_label.setText("âš ď¸Ź Cannot test: GeoLite2 database not installed")
+            self.test_result_label.setText("Ä‚ËÄąË‡Ă‚Â Ă„ĹąĂ‚Â¸ÄąÄ… Cannot test: GeoLite2 database not installed")
             self.test_result_label.setStyleSheet("color: #fbbf24;")
             self.save_btn.setEnabled(True)
             self._validated_ip = ip
@@ -3280,14 +3282,14 @@ class LocationPage(QWizardPage):
         location_info = get_location_info(ip_address=ip)
 
         if "error" in location_info:
-            self.test_result_label.setText("âš ď¸Ź IP not found in database. It may still work.")
+            self.test_result_label.setText("Ä‚ËÄąË‡Ă‚Â Ă„ĹąĂ‚Â¸ÄąÄ… IP not found in database. It may still work.")
             self.test_result_label.setStyleSheet("color: #fbbf24;")
             self.save_btn.setEnabled(True)
             self._validated_ip = ip
         else:
             city = location_info.get("city", "Unknown")
             country = location_info.get("country", "Unknown")
-            self.test_result_label.setText(f"âś… Location: {city}, {country}")
+            self.test_result_label.setText(f"Ä‚ËÄąâ€şĂ˘â‚¬Â¦ Location: {city}, {country}")
             self.test_result_label.setStyleSheet("color: #4ade80;")
             self.save_btn.setEnabled(True)
             self._validated_ip = ip
@@ -3295,7 +3297,7 @@ class LocationPage(QWizardPage):
     def _save_ip_to_config(self):
         """Save the validated IP to config file."""
         if not self._validated_ip:
-            self.save_status_label.setText("âťŚ Please test an IP address first")
+            self.save_status_label.setText("Ä‚ËÄąÄ„ÄąĹˇ Please test an IP address first")
             self.save_status_label.setStyleSheet("color: #f87171;")
             return
 
@@ -3311,12 +3313,12 @@ class LocationPage(QWizardPage):
             # _save_json keeps the file at 0o600 (it can hold llm_api_key).
             _save_json(config_path, config)
 
-            self.save_status_label.setText(f"âś… Saved to {config_path}")
+            self.save_status_label.setText(f"Ä‚ËÄąâ€şĂ˘â‚¬Â¦ Saved to {config_path}")
             self.save_status_label.setStyleSheet("color: #4ade80;")
             self._check_location_status()
 
         except Exception as e:
-            self.save_status_label.setText(f"âťŚ Error saving config: {e}")
+            self.save_status_label.setText(f"Ä‚ËÄąÄ„ÄąĹˇ Error saving config: {e}")
             self.save_status_label.setStyleSheet("color: #f87171;")
 
     def isComplete(self) -> bool:
@@ -3360,7 +3362,7 @@ class DictationPage(QWizardPage):
         layout.setContentsMargins(40, 40, 40, 40)
 
         # Header
-        title = QLabel("đźŽ™ď¸Ź Dictation Mode")
+        title = QLabel("Ă„â€ÄąĹźÄąËťĂ˘â€žËĂ„ĹąĂ‚Â¸ÄąÄ… Dictation Mode")
         title.setObjectName("title")
         layout.addWidget(title)
 
@@ -3390,7 +3392,7 @@ class DictationPage(QWizardPage):
 
         filler_note = QLabel(
             "Uses your chat model to clean up dictation output. "
-            "Adds a small delay (~1â€“3 s) after each dictation."
+            "Adds a small delay (~1Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬Ĺ›3 s) after each dictation."
         )
         filler_note.setWordWrap(True)
         filler_note.setStyleSheet("color: #71717a; font-size: 12px; margin-left: 28px;")
@@ -3405,7 +3407,7 @@ class DictationPage(QWizardPage):
         hotkey_layout.setContentsMargins(24, 24, 24, 24)
         hotkey_layout.setSpacing(12)
 
-        hotkey_title = QLabel("âŚ¨ď¸Ź Dictation Hotkey")
+        hotkey_title = QLabel("Ä‚ËÄąĹˇĂ‚Â¨Ă„ĹąĂ‚Â¸ÄąÄ… Dictation Hotkey")
         hotkey_title.setStyleSheet("font-size: 16px; font-weight: bold; color: #fbbf24;")
         hotkey_layout.addWidget(hotkey_title)
 
@@ -3441,16 +3443,16 @@ class DictationPage(QWizardPage):
         tips_layout.setContentsMargins(24, 24, 24, 24)
         tips_layout.setSpacing(8)
 
-        tips_title = QLabel("đź’ˇ How it Works")
+        tips_title = QLabel("Ă„â€ÄąĹźĂ˘â‚¬â„˘Ă‹â€ˇ How it Works")
         tips_title.setStyleSheet("font-size: 16px; font-weight: bold; color: #fbbf24;")
         tips_layout.addWidget(tips_title)
 
         tips = QLabel(
-            "â€˘ <b>Hold</b> the hotkey to record, <b>release</b> to transcribe and paste\n"
-            "â€˘ <b>Double-tap</b> the hotkey for hands-free mode (tap again or press Esc to stop)\n"
-            "â€˘ Uses the same Whisper model as voice input â€” no extra memory\n"
-            "â€˘ View past dictations from the system tray â†’ đźŽ™ď¸Ź Dictation History\n"
-            "â€˘ Fine-tune in Settings: filler word removal, custom dictionary, and more"
+            "Ä‚ËĂ˘â€šÂ¬Ă‹Â <b>Hold</b> the hotkey to record, <b>release</b> to transcribe and paste\n"
+            "Ä‚ËĂ˘â€šÂ¬Ă‹Â <b>Double-tap</b> the hotkey for hands-free mode (tap again or press Esc to stop)\n"
+            "Ä‚ËĂ˘â€šÂ¬Ă‹Â Uses the same Whisper model as voice input Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ no extra memory\n"
+            "Ä‚ËĂ˘â€šÂ¬Ă‹Â View past dictations from the system tray Ä‚ËĂ˘â‚¬Â Ă˘â‚¬â„˘ Ă„â€ÄąĹźÄąËťĂ˘â€žËĂ„ĹąĂ‚Â¸ÄąÄ… Dictation History\n"
+            "Ä‚ËĂ˘â€šÂ¬Ă‹Â Fine-tune in Settings: filler word removal, custom dictionary, and more"
         )
         tips.setWordWrap(True)
         tips.setStyleSheet("color: #d4d4d8; font-size: 13px; line-height: 1.6;")
@@ -3528,13 +3530,13 @@ class MCPPage(QWizardPage):
         layout.setContentsMargins(40, 40, 40, 40)
 
         # Header
-        title = QLabel("đź”Ś MCP Servers")
+        title = QLabel("Ă„â€ÄąĹźĂ˘â‚¬ĹĄÄąĹˇ MCP Servers")
         title.setObjectName("title")
         layout.addWidget(title)
 
         subtitle = QLabel(
             "MCP (Model Context Protocol) servers give Jarvis extra abilities. "
-            "Select any you'd like to enable â€” you can always change these later in Settings."
+            "Select any you'd like to enable Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ you can always change these later in Settings."
         )
         subtitle.setObjectName("subtitle")
         subtitle.setWordWrap(True)
@@ -3544,7 +3546,7 @@ class MCPPage(QWizardPage):
 
         # Node.js availability warning
         self._node_warning = QLabel(
-            "âš ď¸Ź  <b>Node.js not found.</b> The MCP servers below require Node.js to run. "
+            "Ä‚ËÄąË‡Ă‚Â Ă„ĹąĂ‚Â¸ÄąÄ…  <b>Node.js not found.</b> The MCP servers below require Node.js to run. "
             "<a href='https://nodejs.org/' style='color: #f59e0b;'>Download Node.js</a> "
             "and restart Jarvis, or skip this page for now."
         )
@@ -3600,7 +3602,7 @@ class MCPPage(QWizardPage):
 
         # Tip about more MCPs in settings
         tip = QLabel(
-            "đź’ˇ  Many more MCP servers are available in <b>Settings â†’ đź”Ś MCP Servers</b>, "
+            "Ă„â€ÄąĹźĂ˘â‚¬â„˘Ă‹â€ˇ  Many more MCP servers are available in <b>Settings Ä‚ËĂ˘â‚¬Â Ă˘â‚¬â„˘ Ă„â€ÄąĹźĂ˘â‚¬ĹĄÄąĹˇ MCP Servers</b>, "
             "including GitHub, Slack, Spotify, and custom servers."
         )
         tip.setWordWrap(True)
@@ -3676,9 +3678,9 @@ class MCPPage(QWizardPage):
 class SearchProvidersPage(QWizardPage):
     """Explain and configure web-search fallback providers.
 
-    Ordering mirrors the runtime fallback chain: DDG â†’ Brave â†’ Wikipedia â†’
+    Ordering mirrors the runtime fallback chain: DDG Ä‚ËĂ˘â‚¬Â Ă˘â‚¬â„˘ Brave Ä‚ËĂ˘â‚¬Â Ă˘â‚¬â„˘ Wikipedia Ä‚ËĂ˘â‚¬Â Ă˘â‚¬â„˘
     honest "blocked" envelope. The page is always shown (even when nothing
-    needs configuring) because the explainer itself is the point â€” users
+    needs configuring) because the explainer itself is the point Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ users
     should understand what Jarvis will and won't reach over the network
     before they start using it.
     """
@@ -3691,14 +3693,14 @@ class SearchProvidersPage(QWizardPage):
         layout.setSpacing(16)
         layout.setContentsMargins(40, 40, 40, 40)
 
-        title = QLabel("đź”Ž Search Providers")
+        title = QLabel("Ă„â€ÄąĹźĂ˘â‚¬ĹĄÄąËť Search Providers")
         title.setObjectName("title")
         layout.addWidget(title)
 
         subtitle = QLabel(
             "Jarvis uses DuckDuckGo for web search. When DuckDuckGo blocks a "
             "request or has nothing useful, these optional fallbacks keep "
-            "answers flowing â€” all off by default except Wikipedia."
+            "answers flowing Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ all off by default except Wikipedia."
         )
         subtitle.setObjectName("subtitle")
         subtitle.setWordWrap(True)
@@ -3713,7 +3715,7 @@ class SearchProvidersPage(QWizardPage):
         brave_layout.setContentsMargins(16, 14, 16, 14)
         brave_layout.setSpacing(8)
 
-        brave_title = QLabel("đź¦ Brave Search (optional)")
+        brave_title = QLabel("Ă„â€ÄąĹźĂ‚Â¦Ă‚Â Brave Search (optional)")
         brave_title.setStyleSheet("font-size: 15px; font-weight: bold;")
         brave_layout.addWidget(brave_title)
 
@@ -3744,7 +3746,7 @@ class SearchProvidersPage(QWizardPage):
         wiki_layout.setContentsMargins(16, 14, 16, 14)
         wiki_layout.setSpacing(8)
 
-        wiki_title = QLabel("đź“š Wikipedia (zero-config)")
+        wiki_title = QLabel("Ă„â€ÄąĹźĂ˘â‚¬Ĺ›ÄąË‡ Wikipedia (zero-config)")
         wiki_title.setStyleSheet("font-size: 15px; font-weight: bold;")
         wiki_layout.addWidget(wiki_title)
 
@@ -3764,7 +3766,7 @@ class SearchProvidersPage(QWizardPage):
         layout.addWidget(wiki_card)
 
         tip = QLabel(
-            "đź’ˇ  When every provider fails, Jarvis tells you the search was "
+            "Ă„â€ÄąĹźĂ˘â‚¬â„˘Ă‹â€ˇ  When every provider fails, Jarvis tells you the search was "
             "blocked rather than making something up."
         )
         tip.setWordWrap(True)
@@ -3853,7 +3855,7 @@ class CompletePage(QWizardPage):
         layout.setContentsMargins(40, 60, 40, 40)
 
         # Big success icon
-        success_icon = QLabel("đźŽ‰")
+        success_icon = QLabel("Ă„â€ÄąĹźÄąËťĂ˘â‚¬Â°")
         success_icon.setStyleSheet("font-size: 72px;")
         success_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(success_icon)
@@ -3879,24 +3881,24 @@ class CompletePage(QWizardPage):
         card_layout.setContentsMargins(24, 24, 24, 24)
         card_layout.setSpacing(12)
 
-        tips_title = QLabel("đź’ˇ Quick Tips")
+        tips_title = QLabel("Ă„â€ÄąĹźĂ˘â‚¬â„˘Ă‹â€ˇ Quick Tips")
         tips_title.setStyleSheet("font-size: 16px; font-weight: bold; color: #fbbf24;")
         card_layout.addWidget(tips_title)
         card_layout.addSpacing(8)
 
         tips = QLabel(
-            "â€˘ Say your wake word (e.g. 'Jarvis') anywhere in your sentence to activate the assistant\n"
-            "â€˘ After Jarvis replies, speak your follow-up â€” no need to repeat the wake word\n"
-            "â€˘ Jarvis will appear in your system tray (menu bar on macOS)\n"
-            "â€˘ Right-click the tray icon to access settings and controls\n"
-            "â€˘ View logs by clicking 'đź“ť View Logs' in the tray menu"
+            "Ä‚ËĂ˘â€šÂ¬Ă‹Â Say your wake word (e.g. 'Jarvis') anywhere in your sentence to activate the assistant\n"
+            "Ä‚ËĂ˘â€šÂ¬Ă‹Â After Jarvis replies, speak your follow-up Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ no need to repeat the wake word\n"
+            "Ä‚ËĂ˘â€šÂ¬Ă‹Â Jarvis will appear in your system tray (menu bar on macOS)\n"
+            "Ä‚ËĂ˘â€šÂ¬Ă‹Â Right-click the tray icon to access settings and controls\n"
+            "Ä‚ËĂ˘â€šÂ¬Ă‹Â View logs by clicking 'Ă„â€ÄąĹźĂ˘â‚¬Ĺ›ÄąÄ„ View Logs' in the tray menu"
         )
         tips.setWordWrap(True)
         tips.setStyleSheet("line-height: 1.8;")
         card_layout.addWidget(tips)
 
         # Memory viewer tip with special styling
-        brain_tip = QLabel("đź§   Peek inside Jarvis's brain â€” open the Memory Viewer to see what he remembers")
+        brain_tip = QLabel("Ă„â€ÄąĹźĂ‚Â§Ă‚Â   Peek inside Jarvis's brain Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ open the Memory Viewer to see what he remembers")
         brain_tip.setWordWrap(True)
         brain_tip.setStyleSheet("""
             background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
