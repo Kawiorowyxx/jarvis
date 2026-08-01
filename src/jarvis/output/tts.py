@@ -986,14 +986,24 @@ def create_tts_engine(
     piper_noise_scale: float = 0.667,
     piper_noise_w: float = 0.8,
     piper_sentence_silence: float = 0.2,
+    # ElevenLabs parameters (Kawior / Polish Jarvis)
+    elevenlabs_api_key: Optional[str] = None,
+    elevenlabs_voice_id: Optional[str] = None,
+    elevenlabs_model_id: Optional[str] = None,
+    elevenlabs_stability: float = 0.5,
+    elevenlabs_similarity_boost: float = 0.75,
+    elevenlabs_style: float = 0.0,
+    elevenlabs_speaker_boost: bool = True,
 ):
     """Factory function to create the appropriate TTS engine.
 
     Supported engines:
     - "piper" (default): Neural TTS with auto-download, exact duration tracking
     - "chatterbox": AI voice with emotion control (requires PyTorch)
+    - "elevenlabs": Cloud TTS via ElevenLabs API (Polish multilingual supported)
     """
-    if engine.lower() == "chatterbox":
+    engine_lower = engine.lower()
+    if engine_lower == "chatterbox":
         return ChatterboxTTS(
             enabled=enabled,
             voice=voice,
@@ -1002,6 +1012,21 @@ def create_tts_engine(
             audio_prompt_path=audio_prompt_path,
             exaggeration=exaggeration,
             cfg_weight=cfg_weight,
+        )
+    if engine_lower == "elevenlabs":
+        # Lazy import so users without ElevenLabs configured don't pay the import cost
+        from .elevenlabs_tts import ElevenLabsTTS
+        return ElevenLabsTTS(
+            enabled=enabled,
+            voice=voice,
+            rate=rate,
+            api_key=elevenlabs_api_key,
+            voice_id=elevenlabs_voice_id,
+            model_id=elevenlabs_model_id,
+            stability=elevenlabs_stability,
+            similarity_boost=elevenlabs_similarity_boost,
+            style=elevenlabs_style,
+            speaker_boost=elevenlabs_speaker_boost,
         )
     else:
         # Default to Piper TTS

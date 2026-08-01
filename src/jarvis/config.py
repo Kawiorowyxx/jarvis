@@ -139,6 +139,15 @@ class Settings:
     tts_piper_noise_w: float  # Phoneme width variation
     tts_piper_sentence_silence: float  # Post-sentence silence in seconds
 
+    # ElevenLabs TTS (Kawior / Polish Jarvis)
+    tts_elevenlabs_api_key: str | None  # ElevenLabs API key (sk_...)
+    tts_elevenlabs_voice_id: str | None  # Voice ID (e.g. pNInz6obpgDQGcFmaJgB = Adam)
+    tts_elevenlabs_model_id: str  # "eleven_multilingual_v2" for Polish
+    tts_elevenlabs_stability: float  # 0.0-1.0, higher = more stable
+    tts_elevenlabs_similarity_boost: float  # 0.0-1.0, higher = closer to original voice
+    tts_elevenlabs_style: float  # 0.0-1.0, style exaggeration
+    tts_elevenlabs_speaker_boost: bool  # boost similarity
+
     # Voice Input & Audio
     voice_device: str | None
     sample_rate: int
@@ -530,6 +539,15 @@ def get_default_config() -> Dict[str, Any]:
         "tts_piper_noise_w": 1.0,  # Phoneme width variation (higher = more lively)
         "tts_piper_sentence_silence": 0.2,  # Post-sentence silence in seconds
 
+        # ElevenLabs TTS (Kawior / Polish Jarvis)
+        "tts_elevenlabs_api_key": None,  # Set your sk_... key here
+        "tts_elevenlabs_voice_id": "pNInz6obpgDQGcFmaJgB",  # Adam (English male, multilingual)
+        "tts_elevenlabs_model_id": "eleven_multilingual_v2",  # Required for Polish
+        "tts_elevenlabs_stability": 0.5,
+        "tts_elevenlabs_similarity_boost": 0.75,
+        "tts_elevenlabs_style": 0.0,
+        "tts_elevenlabs_speaker_boost": True,
+
         # Voice Input & Audio
         "voice_device": None,
         "sample_rate": 16000,
@@ -758,6 +776,17 @@ def load_settings() -> Settings:
     tts_piper_noise_w = float(merged.get("tts_piper_noise_w", 1.0))
     tts_piper_sentence_silence = float(merged.get("tts_piper_sentence_silence", 0.2))
 
+    # ElevenLabs TTS settings (Kawior / Polish Jarvis)
+    tts_elevenlabs_api_key_val = merged.get("tts_elevenlabs_api_key")
+    tts_elevenlabs_api_key = None if tts_elevenlabs_api_key_val in (None, "", "null") else str(tts_elevenlabs_api_key_val).strip()
+    tts_elevenlabs_voice_id_val = merged.get("tts_elevenlabs_voice_id")
+    tts_elevenlabs_voice_id = None if tts_elevenlabs_voice_id_val in (None, "", "null") else str(tts_elevenlabs_voice_id_val).strip()
+    tts_elevenlabs_model_id = str(merged.get("tts_elevenlabs_model_id", "eleven_multilingual_v2"))
+    tts_elevenlabs_stability = float(merged.get("tts_elevenlabs_stability", 0.5))
+    tts_elevenlabs_similarity_boost = float(merged.get("tts_elevenlabs_similarity_boost", 0.75))
+    tts_elevenlabs_style = float(merged.get("tts_elevenlabs_style", 0.0))
+    tts_elevenlabs_speaker_boost = bool(merged.get("tts_elevenlabs_speaker_boost", True))
+
     voice_device_val = merged.get("voice_device")
     voice_device = None if voice_device_val in (None, "", "default", "system") else str(voice_device_val)
     voice_block_seconds = float(merged.get("voice_block_seconds", 4.0))
@@ -929,6 +958,15 @@ def load_settings() -> Settings:
         tts_piper_noise_scale=tts_piper_noise_scale,
         tts_piper_noise_w=tts_piper_noise_w,
         tts_piper_sentence_silence=tts_piper_sentence_silence,
+
+        # ElevenLabs TTS (Kawior / Polish Jarvis)
+        tts_elevenlabs_api_key=tts_elevenlabs_api_key,
+        tts_elevenlabs_voice_id=tts_elevenlabs_voice_id,
+        tts_elevenlabs_model_id=tts_elevenlabs_model_id,
+        tts_elevenlabs_stability=tts_elevenlabs_stability,
+        tts_elevenlabs_similarity_boost=tts_elevenlabs_similarity_boost,
+        tts_elevenlabs_style=tts_elevenlabs_style,
+        tts_elevenlabs_speaker_boost=tts_elevenlabs_speaker_boost,
 
         # Voice Input & Audio
         voice_device=voice_device,

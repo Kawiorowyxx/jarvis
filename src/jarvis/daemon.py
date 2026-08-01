@@ -471,6 +471,14 @@ def main(smoke_test: bool = False) -> None:
         piper_noise_scale=cfg.tts_piper_noise_scale,
         piper_noise_w=cfg.tts_piper_noise_w,
         piper_sentence_silence=cfg.tts_piper_sentence_silence,
+        # ElevenLabs parameters (Kawior / Polish Jarvis)
+        elevenlabs_api_key=cfg.tts_elevenlabs_api_key,
+        elevenlabs_voice_id=cfg.tts_elevenlabs_voice_id,
+        elevenlabs_model_id=cfg.tts_elevenlabs_model_id,
+        elevenlabs_stability=cfg.tts_elevenlabs_stability,
+        elevenlabs_similarity_boost=cfg.tts_elevenlabs_similarity_boost,
+        elevenlabs_style=cfg.tts_elevenlabs_style,
+        elevenlabs_speaker_boost=cfg.tts_elevenlabs_speaker_boost,
     )
     _global_tts_engine = tts  # Expose for face widget speaking animation
     if tts.enabled:
