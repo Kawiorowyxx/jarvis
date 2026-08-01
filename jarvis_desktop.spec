@@ -121,6 +121,7 @@ hiddenimports = [
     'jarvis.output',
     'jarvis.output.tts',
     'jarvis.output.tune_player',
+    'jarvis.output.elevenlabs_tts',  # Kawior: ElevenLabs TTS
     # Piper TTS (local neural TTS)
     'piper',
     'piper.voice',
@@ -287,7 +288,7 @@ excluded_binary_patterns = [
 excluded_system_dlls = {
     'vcruntime140.dll', 'vcruntime140_1.dll',
     'msvcp140.dll', 'msvcp140_1.dll', 'msvcp140_2.dll',
-    'ucrtbase.dll',   # Universal CRT — must come from Windows System32
+    'ucrtbase.dll',   # Universal CRT â€” must come from Windows System32
     'dbghelp.dll',    # Must come from Windows System32
 }
 
@@ -300,7 +301,7 @@ for binary in a.binaries:
     should_exclude = False
     base_name = name.rsplit('\\', 1)[-1].rsplit('/', 1)[-1]
 
-    # Exclude all VC runtime and system DLLs — use system-installed versions
+    # Exclude all VC runtime and system DLLs â€” use system-installed versions
     if base_name in excluded_system_dlls:
         print(f"Excluding system DLL (use VC++ Redistributable): {binary[0]}")
         should_exclude = True
