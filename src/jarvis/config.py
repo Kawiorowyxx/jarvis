@@ -17,13 +17,13 @@ from dotenv import load_dotenv
 SUPPORTED_CHAT_MODELS: Dict[str, Dict[str, str]] = {
     "gemma4:e2b": {
         "name": "Gemma 4 E2B (Default)",
-        "description": "Fast, multimodal, effective 2B â€” a little dumb, occasionally fumbles tool calls; ~7.2GB download",
+        "description": "Fast, multimodal, effective 2B Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ a little dumb, occasionally fumbles tool calls; ~7.2GB download",
         "size": "~7.2GB",
         "vram": "8GB+",
     },
     "gemma4:e4b": {
         "name": "Gemma 4 E4B (Recommended)",
-        "description": "Smarter tool use and reasoning, multimodal, effective 4B â€” ~9.6GB download",
+        "description": "Smarter tool use and reasoning, multimodal, effective 4B Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ ~9.6GB download",
         "size": "~9.6GB",
         "vram": "16GB+",
     },
@@ -45,7 +45,7 @@ SUPPORTED_CHAT_MODELS: Dict[str, Dict[str, str]] = {
 DEFAULT_CHAT_MODEL = "gemma4:e2b"
 # Ollama-path default for the fast tier (voice intent, tool routing, and the
 # other real-time classification passes). On an OpenAI-compatible chat
-# provider an unset fast model resolves to the active chat model instead â€”
+# provider an unset fast model resolves to the active chat model instead Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ
 # this pull-name only exists on Ollama.
 DEFAULT_FAST_MODEL = "gemma4:e2b"
 
@@ -108,7 +108,7 @@ class Settings:
     # Tight deadline for the cheap distil passes used by memory_digest and
     # tool_result_digest. Separate from `llm_tools_timeout_sec` because
     # those paths run a small classification-shaped LLM call, not a
-    # long-running tool â€” a 5-minute ceiling there would stall replies.
+    # long-running tool Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ a 5-minute ceiling there would stall replies.
     llm_digest_timeout_sec: float
     llm_embedding_timeout_sec: float
     llm_profile_select_timeout_sec: float
@@ -192,7 +192,7 @@ class Settings:
     echo_energy_threshold: float
     echo_tolerance: float
 
-    # Fast tier â€” the small, warm, low-latency model behind the real-time
+    # Fast tier Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ the small, warm, low-latency model behind the real-time
     # classification passes (the Model tiers table in llm.spec.md is the
     # authoritative context list).
     # Always resolved at config load: an explicit user value wins; unset
@@ -219,13 +219,13 @@ class Settings:
     tool_carryover_per_entry_chars: int
     # Distil diary + graph into a short relevance-filtered note via a cheap
     # LLM pass before injecting into the reply system prompt. When None
-    # (the default), it auto-enables for SMALL models (â‰¤7B) and stays off
+    # (the default), it auto-enables for SMALL models (Ä‚ËĂ˘â‚¬Â°Ă‚Â¤7B) and stays off
     # for larger models that can handle raw dumps. Set explicitly to force.
     memory_digest_enabled: Optional[bool]
     # Distil raw tool-result payloads (e.g. webSearch extracts) into a
     # short, attributed fact note via a cheap LLM pass before appending
     # them as tool-role messages. When None (the default), it auto-enables
-    # for SMALL models (â‰¤7B) and stays off for larger models that ground
+    # for SMALL models (Ä‚ËĂ˘â‚¬Â°Ă‚Â¤7B) and stays off for larger models that ground
     # on the raw payload reliably. Set explicitly to force on/off.
     tool_result_digest_enabled: Optional[bool]
 
@@ -245,12 +245,12 @@ class Settings:
     evaluator_nudge_max: int
     # Whether the pre-loop planner is enabled. True = planner always runs;
     # False = planner never runs (legacy behaviour, with the
-    # compound_query fallback still active). Default True â€” the planner
+    # compound_query fallback still active). Default True Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ the planner
     # fails open to an empty plan so the cost of a miss is one cheap LLM
     # round-trip, and the upside is multi-step queries actually complete.
     planner_enabled: bool
     # Timeout for the planner LLM call. Short because the planner is on
-    # the critical path â€” a long timeout would dominate first-token
+    # the critical path Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ a long timeout would dominate first-token
     # latency for every query. Planner fails open on timeout.
     planner_timeout_sec: float
 
@@ -265,7 +265,7 @@ class Settings:
     web_search_enabled: bool
     # Optional Brave Search API key. When set, Brave is used as the primary
     # fallback when DuckDuckGo is rate-limited or returns no usable content.
-    # Empty string means "not configured" â€” the tool then falls through to
+    # Empty string means "not configured" Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ the tool then falls through to
     # the always-on Wikipedia fallback. Free tier is 2,000 queries/month.
     brave_search_api_key: str
     # Zero-config Wikipedia fallback toggle. When True (default), the tool
@@ -299,9 +299,13 @@ def _load_json(path: Path) -> Dict[str, Any]:
             with path.open("r", encoding="utf-8") as f:
                 data = json.load(f)
                 if isinstance(data, dict):
+                    import sys as _kawior_sys
+                    print(f"[KAWIOR DEBUG] _load_json: keys={list(data.keys())[:10]}", file=_kawior_sys.stderr, flush=True)
+                    print(f"[KAWIOR DEBUG] _load_json: llm_provider={data.get('llm_provider', 'NOT_SET')!r}, embedding_provider={data.get('embedding_provider', 'NOT_SET')!r}", file=_kawior_sys.stderr, flush=True)
                     return data
-    except Exception:
-        pass
+    except Exception as e:
+        import sys as _kawior_sys
+        print(f"[KAWIOR DEBUG] _load_json ERROR: {e}", file=_kawior_sys.stderr, flush=True)
     return {}
 
 
@@ -359,7 +363,7 @@ def _migrate_config(cfg_path: Path, cfg_json: Dict[str, Any]) -> Dict[str, Any]:
     if migration_version < 1:
         if cfg_json.get("tts_engine") == "system":
             cfg_json["tts_engine"] = "piper"
-            print("đź“˘ Upgraded TTS engine: system â†’ piper (neural voice with auto-download)", flush=True)
+            print("Ă„â€ÄąĹźĂ˘â‚¬Ĺ›Ă‹Â Upgraded TTS engine: system Ä‚ËĂ˘â‚¬Â Ă˘â‚¬â„˘ piper (neural voice with auto-download)", flush=True)
             print("   To revert: set \"tts_engine\": \"system\" in config.json", flush=True)
         cfg_json["_config_version"] = 1
         modified = True
@@ -388,14 +392,14 @@ def _migrate_config(cfg_path: Path, cfg_json: Dict[str, Any]) -> Dict[str, Any]:
     # model system. An explicitly chosen judge (or, failing that, router)
     # model becomes ``fast_model``; the old default value does not promote,
     # so default upgrades keep reaching existing installs. The retired keys
-    # are removed â€” every fast-tier context reads ``fast_model`` now.
+    # are removed Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ every fast-tier context reads ``fast_model`` now.
     if migration_version < 3:
         if not str(cfg_json.get("fast_model", "") or "").strip():
             for old_key in ("intent_judge_model", "tool_router_model"):
                 candidate = str(cfg_json.get(old_key, "") or "").strip()
                 if candidate and candidate != DEFAULT_FAST_MODEL:
                     cfg_json["fast_model"] = candidate
-                    print(f"đź§  Model tiers: kept your {old_key} as fast_model ({candidate})", flush=True)
+                    print(f"Ă„â€ÄąĹźĂ‚Â§Ă‚Â  Model tiers: kept your {old_key} as fast_model ({candidate})", flush=True)
                     break
         for dead_key in ("intent_judge_model", "tool_router_model",
                          "evaluator_model", "planner_model"):
@@ -408,7 +412,7 @@ def _migrate_config(cfg_path: Path, cfg_json: Dict[str, Any]) -> Dict[str, Any]:
         if _save_json(cfg_path, cfg_json):
             pass  # Silent success
         else:
-            print("   âš ď¸Ź Could not save config migration (using new settings in memory).", flush=True)
+            print("   Ä‚ËÄąË‡Ă‚Â Ă„ĹąĂ‚Â¸ÄąÄ… Could not save config migration (using new settings in memory).", flush=True)
 
     return cfg_json
 
@@ -502,7 +506,7 @@ def get_default_config() -> Dict[str, Any]:
         "ollama_chat_model": DEFAULT_CHAT_MODEL,
         "llm_chat_timeout_sec": 180.0,
         "llm_tools_timeout_sec": 300.0,
-        # Cheap distil passes should fail fast â€” a hung digest call would
+        # Cheap distil passes should fail fast Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ a hung digest call would
         # block the reply loop per tool call, amplified by agentic turns.
         "llm_digest_timeout_sec": 8.0,
         "llm_embedding_timeout_sec": 60.0,
@@ -616,11 +620,11 @@ def get_default_config() -> Dict[str, Any]:
         # Tool carryover: cap re-injected prior tool turns + chars per entry.
         "tool_carryover_max_turns": 2,
         "tool_carryover_per_entry_chars": 1200,
-        # None = auto (on for small models â‰¤7B, off for large). Set true/false to force.
+        # None = auto (on for small models Ä‚ËĂ˘â‚¬Â°Ă‚Â¤7B, off for large). Set true/false to force.
         "memory_digest_enabled": None,
         # Distil raw tool results (e.g. webSearch extracts) into a short
         # attributed fact note for small models. Defaults to off: the extra
-        # None = auto (on for small models â‰¤7B, off for large). Set true/false to force.
+        # None = auto (on for small models Ä‚ËĂ˘â‚¬Â°Ă‚Â¤7B, off for large). Set true/false to force.
         # Auto-on for small models mitigates fetch_web_page's 50k-char payloads
         # blowing the 8192 num_ctx window before the main model sees them.
         "tool_result_digest_enabled": None,
@@ -705,6 +709,8 @@ def load_settings() -> Settings:
     # Get defaults and merge with JSON (JSON wins)
     defaults = get_default_config()
     merged: Dict[str, Any] = {**defaults, **cfg_json}
+    import sys as _kawior_sys
+    print('[KAWIOR DEBUG] merged llm_provider=' + repr(merged.get('llm_provider', 'MISSING')) + ' embed=' + repr(merged.get('embedding_provider', 'MISSING')), file=_kawior_sys.stderr, flush=True)
 
     # Build Settings. Some fields support env var overrides.
     # Env overrides: JARVIS_VOICE_DEBUG, JARVIS_WHISPER_BACKEND
@@ -724,7 +730,7 @@ def load_settings() -> Settings:
     # the ``llm_*`` / ``embedding_*`` fields when it is OpenAI-compatible.
     # Resolving the active model this way (rather than a blanket
     # ``llm_chat_model or ollama_chat_model``) keeps the Ollama model
-    # picker â€” which writes ``ollama_chat_model`` â€” authoritative on the
+    # picker Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ which writes ``ollama_chat_model`` Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ authoritative on the
     # Ollama path, so a stale ``llm_chat_model`` (e.g. promoted by the v2
     # migration) can never shadow it.
     llm_provider = str(merged.get("llm_provider", "ollama") or "ollama").strip().lower()
@@ -825,7 +831,7 @@ def load_settings() -> Settings:
     echo_energy_threshold = float(merged.get("echo_energy_threshold", 2.0))
     echo_tolerance = float(merged.get("echo_tolerance", 0.3))
 
-    # Fast tier â€” the small, warm model behind the real-time classification
+    # Fast tier Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ the small, warm model behind the real-time classification
     # passes (see the Model tiers table in llm.spec.md for the context
     # list). An explicit value wins; the
     # automatic default is the small Ollama pull on the Ollama chat path and
@@ -919,7 +925,7 @@ def load_settings() -> Settings:
         db_path=db_path,
         sqlite_vss_path=sqlite_vss_path,
 
-        # LLM & AI Models â€” provider-aware
+        # LLM & AI Models Ä‚ËĂ˘â€šÂ¬Ă˘â‚¬ĹĄ provider-aware
         llm_provider=llm_provider,
         llm_base_url=llm_base_url,
         llm_api_key=llm_api_key,
